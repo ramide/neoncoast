@@ -6,10 +6,16 @@ A cozy, relaxed OutRun-style 3D racing game built in C with raylib.
 
 - 8 international stages (California, Japan, India, Mediterranean, NYC, Hawaii, Sahara, Guatemala)
 - 5 modern cars with distinct stats (Sport Coupe, Muscle, Electric GT, Supercar, Compact EV)
+- 6-speed automatic gearbox with RPM gauge
+- Drifting mechanics with handbrake
+- Traffic cars and roadside scenery (trees, palms, buildings, signs)
+- Hill/elevation changes in road
+- Cloud rendering with pseudo-3D perspective
+- Pause menu (resume, restart, settings, quit)
 - Procedural synthwave music engine with regional variants
 - Dynamic day/night cycle
 - Keyboard + gamepad controls with on-the-fly switching
-- Attract mode, full menu system, high scores
+- Attract mode with road background, full menu system, high scores
 - Cross-platform: Windows, Linux (x86_64 + ARM64), macOS, Android
 
 ## Building
