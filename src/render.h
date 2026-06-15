@@ -3,6 +3,7 @@
 
 #include "common.h"
 #include "road.h"
+#include "race.h"
 
 #define MAX_CLOUDS 12
 

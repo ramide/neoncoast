@@ -6,6 +6,9 @@
 #include "models.h"
 #include "input.h"
 
+#define MAX_TRAFFIC 15
+#define MAX_SCENERY 40
+
 typedef struct {
     Vector3 pos;
     float speed;

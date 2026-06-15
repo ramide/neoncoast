@@ -41,6 +41,7 @@ typedef enum {
     COUNTDOWN,
     RACING,
     FINISH_SCREEN,
+    PAUSED,
     SETTINGS,
     HIGHSCORES,
     EXIT_REQUESTED
