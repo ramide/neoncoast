@@ -6,6 +6,9 @@ on:
   pull_request:
     branches: [ main ]
 
+env:
+  CMAKE_POLICY_VERSION_MINIMUM: "3.5"
+
 jobs:
   build-windows:
     runs-on: windows-latest
@@ -17,7 +20,7 @@ jobs:
         uses: ilammy/msvc-dev-cmd@v1
       - name: Build
         run: |
-          cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_POLICY_VERSION_MINIMUM=3.5
+          cmake -B build -DCMAKE_BUILD_TYPE=Release
           cmake --build build --config Release
       - name: Upload
         uses: actions/upload-artifact@v4
@@ -35,7 +38,7 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y libx11-dev libxrandr-dev libxi-dev libgl1-mesa-dev libglu1-mesa-dev libxcursor-dev libxinerama-dev
       - name: Build
         run: |
-          cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_POLICY_VERSION_MINIMUM=3.5
+          cmake -B build -DCMAKE_BUILD_TYPE=Release
           cmake --build build
       - name: Upload
         uses: actions/upload-artifact@v4
@@ -53,7 +56,7 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y gcc-aarch64-linux-gnu g++-aarch64-linux-gnu
       - name: Build
         run: |
-          cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_POLICY_VERSION_MINIMUM=3.5 \
+          cmake -B build -DCMAKE_BUILD_TYPE=Release \
             -DCMAKE_SYSTEM_NAME=Linux \
             -DCMAKE_SYSTEM_PROCESSOR=aarch64 \
             -DCMAKE_C_COMPILER=aarch64-linux-gnu-gcc \
@@ -73,7 +76,7 @@ jobs:
           submodules: recursive
       - name: Build
         run: |
-          cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_POLICY_VERSION_MINIMUM=3.5
+          cmake -B build -DCMAKE_BUILD_TYPE=Release
           cmake --build build
       - name: Upload
         uses: actions/upload-artifact@v4
