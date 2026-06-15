@@ -15,6 +15,23 @@ target_include_directories(neoncoast PRIVATE src)
 
 if(WIN32)
     target_link_libraries(neoncoast winmm gdi32)
+
+    # Build genicon tool (standalone - no raylib deps)
+    add_executable(genicon EXCLUDE_FROM_ALL tools/genicon.c)
+    target_link_libraries(genicon m)
+
+    # Generate .ico at build time
+    add_custom_target(generate_icon ALL
+        COMMAND genicon
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            ${CMAKE_CURRENT_BINARY_DIR}/neoncoast.ico
+            ${CMAKE_SOURCE_DIR}/res/neoncoast.ico
+        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+        DEPENDS genicon
+        COMMENT "Generating neoncoast.ico...")
+
+    add_dependencies(neoncoast generate_icon)
+    target_sources(neoncoast PRIVATE res/resources.rc)
 elseif(APPLE)
     target_link_libraries(neoncoast "-framework Cocoa" "-framework IOKit")
 elseif(ANDROID)
