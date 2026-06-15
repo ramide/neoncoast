@@ -4,7 +4,13 @@ project(neoncoast C)
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 
-add_subdirectory(third_party/raylib)
+include(FetchContent)
+FetchContent_Declare(
+    raylib
+    GIT_REPOSITORY https://github.com/raysan5/raylib.git
+    GIT_TAG 5.5
+)
+FetchContent_MakeAvailable(raylib)
 
 file(GLOB GAME_SOURCES src/*.c)
 add_executable(neoncoast ${GAME_SOURCES})
@@ -15,7 +21,6 @@ if(WIN32)
     target_link_libraries(neoncoast winmm gdi32)
 elseif(APPLE)
     target_link_libraries(neoncoast "-framework Cocoa" "-framework IOKit")
-elseif(ANDROID)
 else()
     target_link_libraries(neoncoast pthread m dl X11)
 endif()

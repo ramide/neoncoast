@@ -3,5 +3,5 @@ build/
 *.apk
 *.app/
 .DS_Store
-third_party/raylib/
+
 *.json
