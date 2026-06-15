@@ -46,6 +46,35 @@ jobs:
           name: neoncoast-linux
           path: build/neoncoast
 
+  build-linux-arm64:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - name: Install cross-compiler
+        run: |
+          sudo dpkg --add-architecture arm64
+          echo "deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports noble main restricted universe multiverse" | sudo tee /etc/apt/sources.list.d/arm64.list
+          echo "deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports noble-updates main restricted universe multiverse" | sudo tee -a /etc/apt/sources.list.d/arm64.list
+          sudo apt-get update
+          sudo apt-get install -y gcc-aarch64-linux-gnu g++-aarch64-linux-gnu
+          sudo apt-get install -y libx11-dev:arm64 libxrandr-dev:arm64 libxi-dev:arm64 \
+            libgl1-mesa-dev:arm64 libglu1-mesa-dev:arm64 libxcursor-dev:arm64 libxinerama-dev:arm64
+      - name: Build
+        run: |
+          cmake -B build -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_SYSTEM_NAME=Linux \
+            -DCMAKE_SYSTEM_PROCESSOR=aarch64 \
+            -DCMAKE_C_COMPILER=aarch64-linux-gnu-gcc \
+            -DCMAKE_CXX_COMPILER=aarch64-linux-gnu-g++
+          cmake --build build
+      - name: Upload
+        uses: actions/upload-artifact@v4
+        with:
+          name: neoncoast-linux-arm64
+          path: build/neoncoast
+
   build-macos:
     runs-on: macos-latest
     steps:
