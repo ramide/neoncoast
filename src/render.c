@@ -1,5 +1,6 @@
 #include "render.h"
 #include <math.h>
+#include <stdlib.h>
 
 #define HORIZON_Y      (SCREEN_HEIGHT * 0.45f)
 #define FOCAL_LENGTH   300.0f
@@ -14,6 +15,14 @@ void render_init(Render *render) {
         .projection = CAMERA_PERSPECTIVE
     };
     render->timeOfDay = 0.3f;
+
+    for (int i = 0; i < MAX_CLOUDS; i++) {
+        render->clouds[i].x = (float)(rand() % 4000) - 2000;
+        render->clouds[i].y = 200.0f + (float)(rand() % 400);
+        render->clouds[i].z = (float)(rand() % (TOTAL_SEGMENTS * 2)) - (float)TOTAL_SEGMENTS;
+        render->clouds[i].speed = 10.0f + (float)(rand() % 30);
+        render->clouds[i].scale = 0.5f + (float)(rand() % 10) * 0.1f;
+    }
 }
 
 Color render_get_sky_color(float timeOfDay) {
@@ -31,7 +40,7 @@ Color render_get_ambient_color(float timeOfDay) {
 }
 
 void render_update(Render *render, float dt, const Stage *stage) {
-    render->timeOfDay += dt * 0.01f;
+    render->timeOfDay += dt * 0.002f;
     if (render->timeOfDay > stage->timeEnd) {
         render->timeOfDay = stage->timeStart;
     }
@@ -49,6 +58,32 @@ void render_update(Render *render, float dt, const Stage *stage) {
 
 void render_draw_sky(const Render *render) {
     DrawRectangle(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, render->skyColor);
+}
+
+void render_draw_clouds(const Render *render, float playerZ) {
+    for (int i = 0; i < MAX_CLOUDS; i++) {
+        const Cloud *c = &render->clouds[i];
+        float relativeZ = c->z - playerZ;
+        if (relativeZ <= 0 || relativeZ > DRAW_DISTANCE * SEGMENT_LENGTH) continue;
+
+        float scale = FOCAL_LENGTH / relativeZ;
+        float screenX = SCREEN_WIDTH * 0.5f + c->x * scale;
+        float screenY = HORIZON_Y + (c->y - CAMERA_HEIGHT) * scale;
+        float cloudW = 120.0f * c->scale * scale;
+        float cloudH = 30.0f * c->scale * scale;
+
+        if (cloudW < 8.0f) continue;
+
+        Color cloudColor = render->skyColor;
+        cloudColor = ColorBrightness(cloudColor, 40);
+        cloudColor.a = 180;
+
+        DrawEllipse((int)screenX, (int)screenY, (int)cloudW, (int)cloudH, cloudColor);
+        DrawEllipse((int)(screenX - cloudW * 0.4f), (int)(screenY + cloudH * 0.2f),
+                    (int)(cloudW * 0.6f), (int)(cloudH * 0.7f), cloudColor);
+        DrawEllipse((int)(screenX + cloudW * 0.3f), (int)(screenY + cloudH * 0.1f),
+                    (int)(cloudW * 0.5f), (int)(cloudH * 0.6f), cloudColor);
+    }
 }
 
 void render_draw_road(const Render *render, const Stage *stage, float playerZ) {
