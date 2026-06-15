@@ -377,6 +377,9 @@ static void update_racer(Racer *racer, float dt, InputState input, const Stage *
 static void check_collisions(Race *race) {
     Racer *player = &race->racers[race->playerIndex];
 
+    // Cooldown: don't check again until timer expires
+    if (race->collisionTimer > 0) return;
+
     for (int i = 0; i < race->trafficCount; i++) {
         TrafficCar *t = &race->traffic[i];
         if (!t->active) continue;
@@ -415,11 +418,11 @@ static void check_collisions(Race *race) {
         float dx = fabsf(player->pos.x - s->worldX);
         float collDist = 40.0f + s->scale * 30.0f;
         if (dz < collDist * 0.5f && dx < collDist) {
-            player->speed *= 0.5f;
+            player->speed *= 0.7f;
             if (player->pos.x > s->worldX) {
-                player->pos.x += 50.0f;
+                player->pos.x += 30.0f;
             } else {
-                player->pos.x -= 50.0f;
+                player->pos.x -= 30.0f;
             }
             race->playerCollided = true;
             race->collisionTimer = 0.5f;
