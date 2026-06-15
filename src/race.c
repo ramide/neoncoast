@@ -6,7 +6,7 @@
 #define MAX_SPEED 4800.0f
 #define ACCEL_RATE 2000.0f
 #define BRAKE_RATE 1600.0f
-#define FRICTION 0.985f
+#define FRICTION 0.998f
 #define STEER_SPEED 5.0f
 #define GEAR_COUNT 6
 #define GEAR_RPM_SHIFT 0.85f
