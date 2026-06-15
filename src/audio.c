@@ -20,7 +20,7 @@ void audio_init(AudioEngine *engine) {
     engine->playing = false;
 
     InitAudioDevice();
-    engine->stream = CreateAudioStream(AUDIO_SAMPLE_RATE, 16, 1);
+    engine->stream = LoadAudioStream(AUDIO_SAMPLE_RATE, 16, 1);
 }
 
 void audio_play(AudioEngine *engine, StageType stage) {
