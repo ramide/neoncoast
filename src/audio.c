@@ -5,9 +5,9 @@
 
 static float wave_generate(WaveType type, float phase) {
     switch (type) {
-        case WAVE_SINE: return sinf(phase * 2.0f * PI);
-        case WAVE_SAWTOOTH: return 2.0f * (phase - floorf(phase + 0.5f));
-        case WAVE_SQUARE: return (sinf(phase * 2.0f * PI) >= 0) ? 1.0f : -1.0f;
+        case WAVE_SINE: return sin(phase * 2.0f * PI);
+        case WAVE_SAWTOOTH: return 2.0f * (phase - floor(phase + 0.5f));
+        case WAVE_SQUARE: return (sin(phase * 2.0f * PI) >= 0) ? 1.0f : -1.0f;
         case WAVE_NOISE: return ((float)rand() / RAND_MAX) * 2.0f - 1.0f;
         default: return 0.0f;
     }

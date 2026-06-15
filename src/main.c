@@ -12,10 +12,13 @@
 #include <string.h>
 #include <math.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
 
 int main(void) {
     InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "Neon Coast");
     SetTargetFPS(TARGET_FPS);
+    srand((unsigned int)time(NULL));
 
     Game game;
     game_init(&game);
@@ -42,6 +45,8 @@ int main(void) {
     MenuState menu = {0};
     Race race;
     memset(&race, 0, sizeof(Race));
+    road_init(&race.stage, STAGE_COASTAL);
+    road_generate(&race.stage);
 
     CarType selectedCar = CAR_SPORT_COUPE;
     StageType selectedStage = STAGE_COASTAL;
