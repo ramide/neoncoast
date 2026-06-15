@@ -179,14 +179,124 @@ void render_draw_opponent(const Stage *stage, float worldX, float worldZ, Color 
     Segment *seg = road_get_segment(stage, idx);
     screenX += seg->curve * scale * SEGMENT_LENGTH;
 
-    float carW = 60.0f * scale;
-    float carH = 30.0f * scale;
-    if (carW < 4.0f) carW = 4.0f;
-    if (carH < 2.0f) carH = 2.0f;
+    float carW = 108.0f * scale;
+    float carH = 54.0f * scale;
+    if (carW < 6.0f) carW = 6.0f;
+    if (carH < 3.0f) carH = 3.0f;
 
     DrawRectangle((int)(screenX - carW / 2), (int)(screenY - carH / 2), (int)carW, (int)carH, color);
-    DrawCircle((int)(screenX - carW * 0.3f), (int)(screenY + carH * 0.3f), carW * 0.12f, BLACK);
-    DrawCircle((int)(screenX + carW * 0.3f), (int)(screenY + carH * 0.3f), carW * 0.12f, BLACK);
+    DrawRectangle((int)(screenX - carW * 0.3f), (int)(screenY - carH * 0.55f - 10 * scale),
+                  (int)(carW * 0.6f), (int)(12 * scale), ColorBrightness(color, -40));
+    DrawRectangle((int)(screenX - carW * 0.25f), (int)(screenY - carH * 0.55f - 8 * scale),
+                  (int)(carW * 0.5f), (int)(8 * scale), (Color){ 100, 180, 255, 180 });
+    DrawCircle((int)(screenX - carW * 0.35f), (int)(screenY + carH * 0.35f), carW * 0.10f, BLACK);
+    DrawCircle((int)(screenX + carW * 0.35f), (int)(screenY + carH * 0.35f), carW * 0.10f, BLACK);
+    DrawCircle((int)(screenX - carW * 0.3f), (int)(screenY + carH * 0.45f), carW * 0.06f, RED);
+    DrawCircle((int)(screenX + carW * 0.3f), (int)(screenY + carH * 0.45f), carW * 0.06f, RED);
+}
+
+void render_draw_traffic(const Stage *stage, float worldX, float worldZ, Color color, float playerZ, float speed) {
+    (void)speed;
+    float relativeZ = worldZ - playerZ;
+    if (relativeZ <= 0 || relativeZ > DRAW_DISTANCE * SEGMENT_LENGTH) return;
+
+    float scale = FOCAL_LENGTH / relativeZ;
+    float screenX = SCREEN_WIDTH * 0.5f + worldX * scale;
+    float screenY = HORIZON_Y + CAMERA_HEIGHT * scale;
+
+    float segIndex = worldZ / SEGMENT_LENGTH;
+    int idx = ((int)segIndex) % TOTAL_SEGMENTS;
+    Segment *seg = road_get_segment(stage, idx);
+    screenX += seg->curve * scale * SEGMENT_LENGTH;
+
+    float carW = 90.0f * scale;
+    float carH = 40.0f * scale;
+    if (carW < 5.0f) carW = 5.0f;
+    if (carH < 3.0f) carH = 3.0f;
+
+    DrawRectangle((int)(screenX - carW / 2), (int)(screenY - carH / 2), (int)carW, (int)carH, color);
+    DrawRectangle((int)(screenX - carW * 0.25f), (int)(screenY - carH * 0.55f - 8 * scale),
+                  (int)(carW * 0.5f), (int)(10 * scale), ColorBrightness(color, -30));
+    DrawCircle((int)(screenX - carW * 0.3f), (int)(screenY + carH * 0.35f), carW * 0.09f, BLACK);
+    DrawCircle((int)(screenX + carW * 0.3f), (int)(screenY + carH * 0.35f), carW * 0.09f, BLACK);
+    DrawCircle((int)(screenX - carW * 0.25f), (int)(screenY + carH * 0.42f), carW * 0.05f, RED);
+    DrawCircle((int)(screenX + carW * 0.25f), (int)(screenY + carH * 0.42f), carW * 0.05f, RED);
+}
+
+void render_draw_scenery(SceneryObject *scenery, int count, const Stage *stage, float playerZ) {
+    for (int i = 0; i < count; i++) {
+        SceneryObject *s = &scenery[i];
+        float relativeZ = s->worldZ - playerZ;
+        if (relativeZ <= 0 || relativeZ > DRAW_DISTANCE * SEGMENT_LENGTH) continue;
+
+        float scale = FOCAL_LENGTH / relativeZ;
+        float screenX = SCREEN_WIDTH * 0.5f + s->worldX * scale;
+        float screenY = HORIZON_Y + CAMERA_HEIGHT * scale;
+
+        int segIdx = (int)(s->worldZ / SEGMENT_LENGTH) % TOTAL_SEGMENTS;
+        Segment *seg = road_get_segment(stage, segIdx);
+        screenX += seg->curve * scale * SEGMENT_LENGTH;
+
+        if (screenX < -200 || screenX > SCREEN_WIDTH + 200) continue;
+
+        switch (s->type) {
+            case SCENERY_TREE: {
+                float trunkW = 8.0f * s->scale * scale;
+                float trunkH = 60.0f * s->scale * scale;
+                float crownR = 25.0f * s->scale * scale;
+                if (trunkW < 2) continue;
+                DrawRectangle((int)(screenX - trunkW / 2), (int)(screenY - trunkH),
+                              (int)trunkW, (int)trunkH, (Color){ 100, 60, 30, 255 });
+                DrawCircle((int)screenX, (int)(screenY - trunkH - crownR * 0.5f),
+                           (int)crownR, s->color);
+                break;
+            }
+            case SCENERY_PALM: {
+                float trunkW = 6.0f * s->scale * scale;
+                float trunkH = 80.0f * s->scale * scale;
+                float frondR = 35.0f * s->scale * scale;
+                if (trunkW < 2) continue;
+                DrawRectangle((int)(screenX - trunkW / 2), (int)(screenY - trunkH),
+                              (int)trunkW, (int)trunkH, (Color){ 120, 80, 40, 255 });
+                DrawCircle((int)screenX, (int)(screenY - trunkH), (int)frondR, s->color);
+                DrawCircle((int)(screenX - frondR * 0.5f), (int)(screenY - trunkH + frondR * 0.3f),
+                           (int)(frondR * 0.6f), s->color);
+                DrawCircle((int)(screenX + frondR * 0.5f), (int)(screenY - trunkH + frondR * 0.3f),
+                           (int)(frondR * 0.6f), s->color);
+                break;
+            }
+            case SCENERY_BUILDING: {
+                float buildW = 60.0f * s->scale * scale;
+                float buildH = 120.0f * s->scale * scale;
+                if (buildW < 4) continue;
+                DrawRectangle((int)(screenX - buildW / 2), (int)(screenY - buildH),
+                              (int)buildW, (int)buildH, s->color);
+                Color windowColor = (Color){ 200, 220, 255, 200 };
+                int winRows = 3;
+                int winCols = 2;
+                for (int wy = 0; wy < winRows; wy++) {
+                    for (int wx = 0; wx < winCols; wx++) {
+                        float winX = screenX - buildW * 0.3f + wx * buildW * 0.35f;
+                        float winY = screenY - buildH * 0.8f + wy * buildH * 0.25f;
+                        DrawRectangle((int)winX, (int)winY,
+                                      (int)(buildW * 0.15f), (int)(buildH * 0.12f), windowColor);
+                    }
+                }
+                break;
+            }
+            case SCENERY_SIGN: {
+                float signW = 30.0f * s->scale * scale;
+                float signH = 15.0f * s->scale * scale;
+                float poleH = 40.0f * s->scale * scale;
+                if (signW < 3) continue;
+                DrawRectangle((int)(screenX - 2 * scale), (int)(screenY - poleH),
+                              (int)(4 * scale), (int)poleH, (Color){ 150, 150, 150, 255 });
+                DrawRectangle((int)(screenX - signW / 2), (int)(screenY - poleH - signH),
+                              (int)signW, (int)signH, (Color){ 50, 50, 180, 255 });
+                break;
+            }
+        }
+    }
 }
 
 void render_draw_car(float steer, Color color, float speed) {
