@@ -74,6 +74,12 @@ int main(void) {
             game_update(&game, FIXED_DT);
 
             switch (game.current) {
+                case BOOT:
+                    if (confirmPressed) {
+                        game_set_state(&game, ATTRACT_MODE);
+                    }
+                    break;
+
                 case ATTRACT_MODE:
                     if (confirmPressed || backPressed) {
                         game_set_state(&game, MAIN_MENU);
