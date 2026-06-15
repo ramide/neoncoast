@@ -28,7 +28,7 @@ jobs:
           name: neoncoast-windows
           path: build/Release/neoncoast.exe
 
-  build-linux-amd64:
+  build-linux:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -43,34 +43,7 @@ jobs:
       - name: Upload
         uses: actions/upload-artifact@v4
         with:
-          name: neoncoast-linux-amd64
-          path: build/neoncoast
-
-  build-linux-arm64:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          submodules: recursive
-      - name: Install cross-compiler
-        run: |
-          sudo dpkg --add-architecture arm64
-          sudo apt-get update
-          sudo apt-get install -y gcc-aarch64-linux-gnu g++-aarch64-linux-gnu
-          sudo apt-get install -y libx11-dev:arm64 libxrandr-dev:arm64 libxi-dev:arm64 \
-            libgl1-mesa-dev:arm64 libglu1-mesa-dev:arm64 libxcursor-dev:arm64 libxinerama-dev:arm64
-      - name: Build
-        run: |
-          cmake -B build -DCMAKE_BUILD_TYPE=Release \
-            -DCMAKE_SYSTEM_NAME=Linux \
-            -DCMAKE_SYSTEM_PROCESSOR=aarch64 \
-            -DCMAKE_C_COMPILER=aarch64-linux-gnu-gcc \
-            -DCMAKE_CXX_COMPILER=aarch64-linux-gnu-g++
-          cmake --build build
-      - name: Upload
-        uses: actions/upload-artifact@v4
-        with:
-          name: neoncoast-linux-arm64
+          name: neoncoast-linux
           path: build/neoncoast
 
   build-macos:

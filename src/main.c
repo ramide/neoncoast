@@ -9,6 +9,9 @@
 #include "race.h"
 #include "ui.h"
 #include "models.h"
+#include <string.h>
+#include <math.h>
+#include <stdio.h>
 
 int main(void) {
     InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "Neon Coast");
