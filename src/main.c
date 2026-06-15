@@ -70,6 +70,7 @@ int main(void) {
     bool prevBack = false;
     bool prevThrottle = false;
     bool prevHandbrake = false;
+    int prevCountdown = 3;
 
     while (!WindowShouldClose()) {
         double currentTime = GetTime();
@@ -176,12 +177,20 @@ int main(void) {
                 case COUNTDOWN:
                     race_update(&race, FIXED_DT, input.state);
                     if (race.started) {
+                        audio_sfx_countdown(&audio, 0);
                         game_set_state(&game, RACING);
+                    } else if (race.countdown != prevCountdown) {
+                        audio_sfx_countdown(&audio, race.countdown);
+                        prevCountdown = race.countdown;
                     }
                     break;
 
                 case RACING:
                     race_update(&race, FIXED_DT, input.state);
+                    if (race.playerCollided) {
+                        audio_sfx_collision(&audio);
+                        race.playerCollided = false;
+                    }
                     render_update(&render, FIXED_DT, &race.stage);
                     if (input.state.pause && !prevBack) {
                         game_set_state(&game, PAUSED);
@@ -189,6 +198,7 @@ int main(void) {
                         prevBack = true;
                     }
                     if (race.finished) {
+                        audio_sfx_finish(&audio);
                         game_set_state(&game, FINISH_SCREEN);
                         menu.selectedItem = 0;
                         audio_stop(&audio);

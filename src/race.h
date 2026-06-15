@@ -80,6 +80,7 @@ typedef struct {
     int trafficCount;
     SceneryObject scenery[MAX_SCENERY];
     int sceneryCount;
+    bool playerCollided;
 } Race;
 
 void race_init(Race *race, StageType stageType, int playerCarIndex);

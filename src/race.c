@@ -378,6 +378,7 @@ static void check_collisions(Race *race) {
             if (player->speed < 100.0f) player->speed = 100.0f;
             t->speed -= 20.0f;
             if (t->speed < 80.0f) t->speed = 80.0f;
+            race->playerCollided = true;
         }
     }
 
