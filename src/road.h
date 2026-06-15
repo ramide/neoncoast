@@ -38,6 +38,6 @@ typedef struct {
 
 void road_init(Stage *stage, StageType type);
 void road_generate(Stage *stage);
-Segment* road_get_segment(const Stage *stage, int index);
+const Segment* road_get_segment(const Stage *stage, int index);
 
 #endif

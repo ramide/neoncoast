@@ -50,12 +50,14 @@ int main(void) {
     FILE *f = fopen("neoncoast.ico", "wb");
     if (!f) { perror("fopen"); return 1; }
 
-    unsigned char header[] = { 0, 0, 1, 0, 1, 0 };
-    fwrite(header, 1, 6, f);
-
-    int pixelOffset = 22;
     int pixelSize = 32 * 32 * 4;
-    unsigned char dir[] = {
+    int bmpHeaderSize = 40;
+    int pixelOffset = 6 + 16 + bmpHeaderSize;
+
+    unsigned char iconDir[] = { 0, 0, 1, 0, 1, 0 };
+    fwrite(iconDir, 1, 6, f);
+
+    unsigned char dirEntry[] = {
         32, 32, 0, 0, 1, 0, 32, 0,
         (unsigned char)(pixelSize & 0xFF),
         (unsigned char)((pixelSize >> 8) & 0xFF),
@@ -66,7 +68,22 @@ int main(void) {
         (unsigned char)((pixelOffset >> 16) & 0xFF),
         (unsigned char)((pixelOffset >> 24) & 0xFF)
     };
-    fwrite(dir, 1, 16, f);
+    fwrite(dirEntry, 1, 16, f);
+
+    unsigned char bmpInfo[] = {
+        40, 0, 0, 0,
+        32, 0, 0, 0,
+        64, 0, 0, 0,
+        1, 0,
+        32, 0,
+        0, 0, 0, 0,
+        0, 0, 0, 0,
+        0, 0, 0, 0,
+        0, 0, 0, 0,
+        0, 0, 0, 0,
+        0, 0, 0, 0
+    };
+    fwrite(bmpInfo, 1, bmpHeaderSize, f);
 
     for (int y = 31; y >= 0; y--)
         for (int x = 0; x < 32; x++)

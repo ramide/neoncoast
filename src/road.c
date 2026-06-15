@@ -99,7 +99,7 @@ void road_generate(Stage *stage) {
     }
 }
 
-Segment* road_get_segment(const Stage *stage, int index) {
+const Segment* road_get_segment(const Stage *stage, int index) {
     if (stage->segmentCount == 0) return &stage->segments[0];
-    return (Segment*)(void*)&stage->segments[index % stage->segmentCount];
+    return &stage->segments[index % stage->segmentCount];
 }

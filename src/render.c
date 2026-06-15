@@ -241,7 +241,7 @@ void render_draw_road(const Render *render, const Stage *stage, float playerZ) {
 
     for (int n = 0; n < DRAW_DISTANCE + 2; n++) {
         int segIndex = (playerSeg + n + 1) % TOTAL_SEGMENTS;
-        Segment *seg = road_get_segment(stage, segIndex);
+        const Segment *seg = road_get_segment(stage, segIndex);
         totalDx += seg->curve;
         totalHill += seg->hill;
         dx[n] = totalDx;
@@ -337,7 +337,7 @@ void render_draw_opponent(const Stage *stage, float worldX, float worldZ, Color 
 
     float segIndex = worldZ / SEGMENT_LENGTH;
     int idx = ((int)segIndex) % TOTAL_SEGMENTS;
-    Segment *seg = road_get_segment(stage, idx);
+    const Segment *seg = road_get_segment(stage, idx);
     screenX += seg->curve * scale * SEGMENT_LENGTH;
 
     float carW = 220.0f * scale;
@@ -367,7 +367,7 @@ void render_draw_traffic(const Stage *stage, float worldX, float worldZ, Color c
 
     float segIndex = worldZ / SEGMENT_LENGTH;
     int idx = ((int)segIndex) % TOTAL_SEGMENTS;
-    Segment *seg = road_get_segment(stage, idx);
+    const Segment *seg = road_get_segment(stage, idx);
     screenX += seg->curve * scale * SEGMENT_LENGTH;
 
     float carW = 200.0f * scale;
@@ -395,7 +395,7 @@ void render_draw_scenery(const Render *render, SceneryObject *scenery, int count
         float screenY = HORIZON_Y + CAMERA_HEIGHT * scale;
 
         int segIdx = (int)(s->worldZ / SEGMENT_LENGTH) % TOTAL_SEGMENTS;
-        Segment *seg = road_get_segment(stage, segIdx);
+        const Segment *seg = road_get_segment(stage, segIdx);
         screenX += seg->curve * scale * SEGMENT_LENGTH;
 
         if (screenX < -200 || screenX > SCREEN_WIDTH + 200) continue;

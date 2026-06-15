@@ -459,7 +459,7 @@ void race_update(Race *race, float dt, InputState input) {
         if (!t->active) continue;
 
         int segIdx = (int)(t->pos.z / SEGMENT_LENGTH) % TOTAL_SEGMENTS;
-        Segment *seg = road_get_segment(&race->stage, segIdx);
+        const Segment *seg = road_get_segment(&race->stage, segIdx);
         float targetX = seg->curve * 800.0f + t->baseX;
         t->pos.x += (targetX - t->pos.x) * 0.05f;
         t->pos.z += t->speed * dt;
