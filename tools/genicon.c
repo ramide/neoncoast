@@ -25,7 +25,7 @@ int main(void) {
         for (int x = 0; x < 32; x++) {
             float dx = (float)(x - 16);
             float dy = (float)(y - 16);
-            float dist = sqrtf(dx * dx + dy * dy);
+            float dist = (float)sqrt(dx * dx + dy * dy);
 
             if (dist < 6.5f) {
                 float bright = 1.0f - dist / 6.5f;

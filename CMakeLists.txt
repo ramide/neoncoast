@@ -18,7 +18,6 @@ if(WIN32)
 
     # Build genicon tool (standalone - no raylib deps)
     add_executable(genicon EXCLUDE_FROM_ALL tools/genicon.c)
-    target_link_libraries(genicon m)
 
     # Generate .ico at build time
     add_custom_target(generate_icon ALL

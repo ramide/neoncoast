@@ -352,7 +352,7 @@ int main(void) {
                 render_draw_background(&render, race.racers[0].pos.z, selectedStage);
                 render_draw_clouds(&render, race.racers[0].pos.z);
                 render_draw_road(&render, &race.stage, race.racers[0].pos.z);
-                render_draw_scenery(race.scenery, race.sceneryCount, &race.stage, race.racers[0].pos.z);
+                render_draw_scenery(&render, race.scenery, race.sceneryCount, &race.stage, race.racers[0].pos.z);
                 for (int t = 0; t < race.trafficCount; t++) {
                     TrafficCar *tc = &race.traffic[t];
                     if (!tc->active) continue;
