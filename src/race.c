@@ -3,9 +3,9 @@
 #include <string.h>
 #include <stdlib.h>
 
-#define MAX_SPEED 1200.0f
-#define ACCEL_RATE 500.0f
-#define BRAKE_RATE 400.0f
+#define MAX_SPEED 4800.0f
+#define ACCEL_RATE 2000.0f
+#define BRAKE_RATE 1600.0f
 #define FRICTION 0.985f
 #define STEER_SPEED 3.0f
 #define GEAR_COUNT 6

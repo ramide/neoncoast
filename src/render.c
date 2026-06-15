@@ -181,12 +181,12 @@ void render_draw_road(const Render *render, const Stage *stage, float playerZ) {
     int playerSeg = (int)(playerZ / SEGMENT_LENGTH);
     float playerOffset = fmodf(playerZ, SEGMENT_LENGTH);
 
-    float dx[DRAW_DISTANCE];
-    float cumHill[DRAW_DISTANCE];
+    float dx[DRAW_DISTANCE + 2];
+    float cumHill[DRAW_DISTANCE + 2];
     float totalDx = 0;
     float totalHill = 0;
 
-    for (int n = 0; n < DRAW_DISTANCE; n++) {
+    for (int n = 0; n < DRAW_DISTANCE + 2; n++) {
         int segIndex = (playerSeg + n + 1) % TOTAL_SEGMENTS;
         Segment *seg = road_get_segment(stage, segIndex);
         totalDx += seg->curve;
@@ -195,65 +195,96 @@ void render_draw_road(const Render *render, const Stage *stage, float playerZ) {
         cumHill[n] = totalHill;
     }
 
-    Color shoulderL = (Color){ 255, 0, 0, 255 };
-    Color shoulderR = (Color){ 255, 0, 0, 255 };
-    Color laneMark = (Color){ 255, 255, 255, 180 };
+    // Sub-division factor for smooth curves (4 sub-trapezoids per segment)
+    #define SUBDIV 4
 
     for (int n = DRAW_DISTANCE - 1; n >= 0; n--) {
-        float z = (n + 1) * SEGMENT_LENGTH - playerOffset;
-        if (z <= 0) continue;
+        float segHill = cumHill[n];
+        float farSegHill = cumHill[n + 1];
 
-        float scale = FOCAL_LENGTH / z;
-        float farZ = z + SEGMENT_LENGTH;
-        float farScale = FOCAL_LENGTH / farZ;
+        for (int s = 0; s < SUBDIV; s++) {
+            float t0 = (float)s / SUBDIV;
+            float t1 = (float)(s + 1) / SUBDIV;
 
-        float roadW = ROAD_WIDTH * scale;
-        float hillOffset = cumHill[n] * scale * 500.0f;
-        float farHillOffset = (n + 1 < DRAW_DISTANCE) ? cumHill[n + 1] * farScale * 500.0f : hillOffset;
+            float z0 = (n + t0) * SEGMENT_LENGTH - playerOffset;
+            float z1 = (n + t1) * SEGMENT_LENGTH - playerOffset;
+            if (z0 <= 0 || z1 <= 0) continue;
 
-        float bottomY = HORIZON_Y + CAMERA_HEIGHT * scale - hillOffset;
-        float topY = HORIZON_Y + CAMERA_HEIGHT * farScale - farHillOffset;
-        float segH = bottomY - topY;
-        if (segH < 1.0f) segH = 1.0f;
+            float scale0 = FOCAL_LENGTH / z0;
+            float scale1 = FOCAL_LENGTH / z1;
 
-        float screenX = SCREEN_WIDTH * 0.5f + dx[n] * scale * SEGMENT_LENGTH;
+            float hillOffset0 = (segHill + (farSegHill - segHill) * t0) * scale0 * 500.0f;
+            float hillOffset1 = (segHill + (farSegHill - segHill) * t1) * scale1 * 500.0f;
 
-        int segIndex = (playerSeg + n + 1) % TOTAL_SEGMENTS;
-        int stripe = segIndex % 2;
-        Color roadColor = stripe ? (Color){ 100, 100, 100, 255 } : (Color){ 80, 80, 80, 255 };
-        Color grassColor = stripe ? COLOR_GRASS : (Color){ 20, 120, 20, 255 };
+            float bottomY = HORIZON_Y + CAMERA_HEIGHT * scale0 - hillOffset0;
+            float topY = HORIZON_Y + CAMERA_HEIGHT * scale1 - hillOffset1;
+            if (bottomY >= SCREEN_HEIGHT || topY >= SCREEN_HEIGHT) continue;
 
-        if (bottomY > HORIZON_Y - 100) {
-            float drawY = (topY > HORIZON_Y - 100) ? topY : HORIZON_Y - 100;
-            float drawH = bottomY - drawY;
-            if (drawH > 0) {
-                DrawRectangle(0, (int)drawY, SCREEN_WIDTH, (int)(drawH + 1), grassColor);
+            float cumCurve0 = dx[n] + (dx[n+1] - dx[n]) * t0;
+            float cumCurve1 = dx[n] + (dx[n+1] - dx[n]) * t1;
 
-                float edgeW = roadW * 0.06f;
-                DrawRectangle((int)(screenX - roadW / 2), (int)drawY, (int)(edgeW + 1), (int)(drawH + 1), shoulderL);
-                DrawRectangle((int)(screenX + roadW / 2 - edgeW), (int)drawY, (int)(edgeW + 1), (int)(drawH + 1), shoulderR);
+            float x0 = SCREEN_WIDTH * 0.5f + cumCurve0 * scale0 * SEGMENT_LENGTH;
+            float x1 = SCREEN_WIDTH * 0.5f + cumCurve1 * scale1 * SEGMENT_LENGTH;
 
-                float innerW = roadW * 0.88f;
-                DrawRectangle((int)(screenX - innerW / 2), (int)drawY, (int)(innerW + 1), (int)(drawH + 1), roadColor);
+            float w0 = ROAD_WIDTH * 0.5f * scale0;
+            float w1 = ROAD_WIDTH * 0.5f * scale1;
 
-                float laneW = roadW * 0.02f;
-                float lanePos1 = screenX - roadW * 0.25f;
-                float lanePos2 = screenX + roadW * 0.25f;
+            float lx = fminf(fminf(x0 - w0, x0 + w0), fminf(x1 - w1, x1 + w1));
+            float rx = fmaxf(fmaxf(x0 - w0, x0 + w0), fmaxf(x1 - w1, x1 + w1));
+            if (rx < 0 || lx > SCREEN_WIDTH) continue;
 
-                float dashLen = SEGMENT_LENGTH * 6.0f;
-                float dashStart = fmodf(playerZ, dashLen * 2) + n * SEGMENT_LENGTH;
-                bool visible1 = fmodf(dashStart, dashLen * 2) < dashLen;
-                bool visible2 = fmodf(dashStart + dashLen, dashLen * 2) < dashLen;
+            // Road surface color
+            Color roadColor;
+            if (render->timeOfDay < 0.2f || render->timeOfDay > 0.8f) {
+                roadColor = (Color){ 60, 60, 70, 255 };
+            } else if (render->timeOfDay < 0.3f || render->timeOfDay > 0.7f) {
+                roadColor = (Color){ 100, 100, 110, 255 };
+            } else {
+                roadColor = (Color){ 140, 140, 150, 255 };
+            }
 
-                if (visible1 && segH > 2.0f) {
-                    DrawRectangle((int)(lanePos1 - laneW / 2), (int)(drawY + segH * 0.2f), (int)laneW, (int)(segH * 0.6f), laneMark);
-                }
-                if (visible2 && segH > 2.0f) {
-                    DrawRectangle((int)(lanePos2 - laneW / 2), (int)(drawY + segH * 0.2f), (int)laneW, (int)(segH * 0.6f), laneMark);
-                }
+            // Draw road trapezoid (two triangles)
+            DrawTriangle(
+                (Vector2){ x0 - w0, bottomY }, (Vector2){ x0 + w0, bottomY },
+                (Vector2){ x1 - w1, topY }, roadColor);
+            DrawTriangle(
+                (Vector2){ x0 + w0, bottomY }, (Vector2){ x1 - w1, topY },
+                (Vector2){ x1 + w1, topY }, roadColor);
+
+            // Rumble strips (road edges) - alternating red/white
+            Color rumbleColor = ((n + s) % 2 == 0) ? (Color){ 255, 255, 255, 200 } : (Color){ 200, 20, 20, 200 };
+
+            // Left rumble strip
+            DrawTriangle(
+                (Vector2){ x0 - w0, bottomY }, (Vector2){ x0 - w0 + w0*0.06f, bottomY },
+                (Vector2){ x1 - w1, topY }, rumbleColor);
+            DrawTriangle(
+                (Vector2){ x0 - w0 + w0*0.06f, bottomY }, (Vector2){ x1 - w1, topY },
+                (Vector2){ x1 - w1 + w1*0.06f, topY }, rumbleColor);
+
+            // Right rumble strip
+            DrawTriangle(
+                (Vector2){ x0 + w0 - w0*0.06f, bottomY }, (Vector2){ x0 + w0, bottomY },
+                (Vector2){ x1 + w1 - w1*0.06f, topY }, rumbleColor);
+            DrawTriangle(
+                (Vector2){ x0 + w0, bottomY }, (Vector2){ x1 + w1 - w1*0.06f, topY },
+                (Vector2){ x1 + w1, topY }, rumbleColor);
+
+            // Center lane markings (dashed) - every 8 sub-segments
+            if ((n + s) % 8 < 4) {
+                float lw0 = w0 * 0.02f;
+                float lw1 = w1 * 0.02f;
+                Color markColor = (Color){ 255, 255, 255, 150 };
+                DrawTriangle(
+                    (Vector2){ x0 - lw0, bottomY }, (Vector2){ x0 + lw0, bottomY },
+                    (Vector2){ x1 - lw1, topY }, markColor);
+                DrawTriangle(
+                    (Vector2){ x0 + lw0, bottomY }, (Vector2){ x1 - lw1, topY },
+                    (Vector2){ x1 + lw1, topY }, markColor);
             }
         }
     }
+    #undef SUBDIV
 }
 
 void render_draw_opponent(const Stage *stage, float worldX, float worldZ, Color color, float playerZ) {
