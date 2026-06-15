@@ -1,0 +1,211 @@
+#include "ui.h"
+#include <stdio.h>
+#include <string.h>
+
+#define MENU_ITEM_HEIGHT 40
+#define MENU_START_Y 200
+
+void ui_draw_menu_items(const char **items, int count, int selected, InputSource source) {
+    for (int i = 0; i < count; i++) {
+        Color color = (i == selected) ? YELLOW : WHITE;
+        int y = MENU_START_Y + i * MENU_ITEM_HEIGHT;
+
+        if (i == selected) {
+            DrawText(TextFormat("> %s", items[i]), 400, y, 24, color);
+        } else {
+            DrawText(TextFormat("  %s", items[i]), 400, y, 24, color);
+        }
+    }
+}
+
+void ui_draw_stats_bar(const char *label, float value, float x, float y) {
+    DrawText(label, (int)x, (int)y, 16, WHITE);
+    DrawRectangle((int)x + 120, (int)y, 100, 16, DARKGRAY);
+    DrawRectangle((int)x + 120, (int)y, (int)(100 * value), 16, GREEN);
+}
+
+const char* ui_get_input_label(InputSource source, const char *kb, const char *gp) {
+    return (source == INPUT_GAMEPAD) ? gp : kb;
+}
+
+void ui_draw_attract_mode(float time, InputSource source) {
+    DrawText("NEON COAST", 300, 150, 48, YELLOW);
+    DrawText("A Cozy OutRun Experience", 380, 210, 20, LIGHTGRAY);
+
+    float carX = 640 + sinf(time * 2.0f) * 200;
+    DrawRectangle((int)carX - 40, 350, 80, 30, RED);
+    DrawCircle((int)carX - 25, 385, 10, BLACK);
+    DrawCircle((int)carX + 25, 385, 10, BLACK);
+
+    if ((int)(time * 2) % 2 == 0) {
+        DrawText("PRESS ANY KEY", 480, 500, 24, WHITE);
+    }
+}
+
+void ui_draw_main_menu(MenuState *menu, InputSource source) {
+    DrawText("NEON COAST", 350, 80, 48, YELLOW);
+
+    static const char *items[] = {
+        "Just Race",
+        "Settings",
+        "High Scores",
+        "Exit"
+    };
+    menu->itemCount = 4;
+    ui_draw_menu_items(items, menu->itemCount, menu->selectedItem, source);
+}
+
+void ui_draw_racer_select(MenuState *menu, InputSource source) {
+    DrawText("SELECT YOUR RACER", 380, 80, 32, YELLOW);
+
+    static const char *racers[] = {
+        "You (Player)",
+        "Sakura",
+        "Marco",
+        "Priya"
+    };
+    menu->itemCount = 4;
+    ui_draw_menu_items(racers, menu->itemCount, menu->selectedItem, source);
+
+    DrawText("Press ENTER to confirm", 420, 450, 18, LIGHTGRAY);
+}
+
+void ui_draw_car_select(MenuState *menu, InputSource source, CarType selected, Color *carColor) {
+    DrawText("SELECT YOUR CAR", 380, 60, 32, YELLOW);
+
+    static const char *cars[] = {
+        "Sport Coupe",
+        "Muscle Car",
+        "Electric GT",
+        "Supercar",
+        "Compact EV"
+    };
+    menu->itemCount = 5;
+    ui_draw_menu_items(cars, menu->itemCount, menu->selectedItem, source);
+
+    float y = 350;
+    CarStats stats = car_get_stats(selected);
+    ui_draw_stats_bar("Speed", stats.speed, 400, y);
+    ui_draw_stats_bar("Accel", stats.acceleration, 400, y + 25);
+    ui_draw_stats_bar("Handling", stats.handling, 400, y + 50);
+
+    DrawText("Color: [R] [G] [B] [Y] [W]", 400, y + 80, 16, LIGHTGRAY);
+    DrawRectangle(650, y + 75, 20, 20, *carColor);
+}
+
+void ui_draw_stage_select(MenuState *menu, InputSource source, StageType selected) {
+    DrawText("SELECT STAGE", 420, 60, 32, YELLOW);
+
+    static const char *stages[] = {
+        "Coastal Highway - California",
+        "Tokyo Highway - Japan",
+        "Temple Run - India",
+        "Sunset Strip - Mediterranean",
+        "Night Drive - NYC",
+        "Tropical Island - Hawaii",
+        "Desert Run - Sahara",
+        "Highland Run - Guatemala"
+    };
+    menu->itemCount = 8;
+    ui_draw_menu_items(stages, menu->itemCount, menu->selectedItem, source);
+}
+
+void ui_draw_settings(MenuState *menu, InputSource source, GameConfig *config) {
+    DrawText("SETTINGS", 460, 60, 32, YELLOW);
+
+    static const char *items[] = {
+        "Music Volume",
+        "SFX Volume",
+        "Input Deadzone",
+        "Fullscreen",
+        "V-Sync",
+        "Back"
+    };
+    menu->itemCount = 6;
+    ui_draw_menu_items(items, menu->itemCount, menu->selectedItem, source);
+
+    float y = MENU_START_Y;
+    DrawText(TextFormat("%.0f%%", config->musicVolume * 100), 700, y, 18, WHITE);
+    DrawText(TextFormat("%.0f%%", config->sfxVolume * 100), 700, y + 40, 18, WHITE);
+    DrawText(TextFormat("%.2f", config->deadzone), 700, y + 80, 18, WHITE);
+    DrawText(config->fullscreen ? "ON" : "OFF", 700, y + 120, 18, WHITE);
+    DrawText(config->vsync ? "ON" : "OFF", 700, y + 160, 18, WHITE);
+}
+
+void ui_draw_highscores(InputSource source, const HighScoreTable *table) {
+    DrawText("HIGH SCORES", 420, 60, 32, YELLOW);
+
+    if (table->count == 0) {
+        DrawText("No scores yet!", 500, 200, 24, LIGHTGRAY);
+        return;
+    }
+
+    DrawText("Name              Time    Stage          Car", 150, 120, 16, YELLOW);
+
+    for (int i = 0; i < table->count; i++) {
+        const HighScoreEntry *e = &table->entries[i];
+        DrawText(TextFormat("%-18s %6.1fs  %-14s %s",
+                           e->name, e->time,
+                           e->stage < 8 ? "Stage" : "Unknown",
+                           e->car < 5 ? "Car" : "Unknown"),
+                150, 150 + i * 25, 16, WHITE);
+    }
+}
+
+void ui_draw_countdown(int count) {
+    const char *text;
+    switch (count) {
+        case 3: text = "3"; break;
+        case 2: text = "2"; break;
+        case 1: text = "1"; break;
+        case 0: text = "GO!"; break;
+        default: text = ""; break;
+    }
+
+    int size = (count == 0) ? 72 : 96;
+    Color color = (count == 0) ? GREEN : RED;
+    DrawText(text, SCREEN_WIDTH / 2 - size, SCREEN_HEIGHT / 2 - size / 2, size, color);
+}
+
+void ui_draw_hud(const Race *race, InputSource source) {
+    const Racer *player = &race->racers[race->playerIndex];
+
+    DrawText(TextFormat("%d km/h", (int)(player->speed * 1.2f)), 20, 20, 28, WHITE);
+
+    const char *posLabels[] = { "", "1st", "2nd", "3rd", "4th" };
+    DrawText(posLabels[player->racePos], 20, 55, 24, YELLOW);
+
+    DrawText(TextFormat("Lap %d / %d", player->lap, MAX_LAPS), 20, 85, 20, WHITE);
+
+    DrawText(TextFormat("%.1fs", player->totalTime), 20, 110, 18, LIGHTGRAY);
+
+    if (player->bestLap < 9999.0f) {
+        DrawText(TextFormat("Best: %.1fs", player->bestLap), 20, 135, 16, GREEN);
+    }
+}
+
+void ui_draw_finish_screen(const Race *race, MenuState *menu, InputSource source) {
+    const Racer *player = &race->racers[race->playerIndex];
+
+    DrawText("RACE COMPLETE", 380, 100, 36, YELLOW);
+
+    const char *posLabels[] = { "", "1st Place!", "2nd Place", "3rd Place", "4th Place" };
+    DrawText(posLabels[player->racePos], 450, 160, 28, WHITE);
+
+    DrawText(TextFormat("Time: %.1fs", player->totalTime), 450, 210, 22, WHITE);
+    if (player->bestLap < 9999.0f) {
+        DrawText(TextFormat("Best Lap: %.1fs", player->bestLap), 450, 240, 20, GREEN);
+    }
+
+    static const char *items[] = { "Continue", "Retry", "Main Menu" };
+    menu->itemCount = 3;
+    ui_draw_menu_items(items, menu->itemCount, menu->selectedItem, source);
+}
+
+void ui_draw_pause_menu(MenuState *menu, InputSource source) {
+    DrawRectangle(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, Fade(BLACK, 0.7f));
+
+    static const char *items[] = { "Resume", "Restart", "Settings", "Quit to Menu" };
+    menu->itemCount = 4;
+    ui_draw_menu_items(items, menu->itemCount, menu->selectedItem, source);
+}
