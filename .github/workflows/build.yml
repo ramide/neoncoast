@@ -8,6 +8,7 @@ on:
 
 env:
   CMAKE_POLICY_VERSION_MINIMUM: "3.5"
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
   build-windows:
