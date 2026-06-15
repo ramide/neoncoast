@@ -1,6 +1,8 @@
 #ifndef COMMON_H
 #define COMMON_H
 
+#define __STDC_WANT_IEC_60559_TYPES_EXT__ 1
+#include <math.h>
 #include "raylib.h"
 
 #define SCREEN_WIDTH 1280
