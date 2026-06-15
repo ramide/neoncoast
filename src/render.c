@@ -91,18 +91,21 @@ void render_draw_road(const Render *render, const Stage *stage, float playerZ) {
     float playerOffset = fmodf(playerZ, SEGMENT_LENGTH);
 
     float dx[DRAW_DISTANCE];
+    float cumHill[DRAW_DISTANCE];
     float totalDx = 0;
+    float totalHill = 0;
 
     for (int n = 0; n < DRAW_DISTANCE; n++) {
         int segIndex = (playerSeg + n + 1) % TOTAL_SEGMENTS;
         Segment *seg = road_get_segment(stage, segIndex);
         totalDx += seg->curve;
+        totalHill += seg->hill;
         dx[n] = totalDx;
+        cumHill[n] = totalHill;
     }
 
     Color shoulderL = (Color){ 255, 0, 0, 255 };
     Color shoulderR = (Color){ 255, 0, 0, 255 };
-    Color rumble = (Color){ 255, 255, 255, 255 };
     Color laneMark = (Color){ 255, 255, 255, 180 };
 
     for (int n = DRAW_DISTANCE - 1; n >= 0; n--) {
@@ -114,8 +117,11 @@ void render_draw_road(const Render *render, const Stage *stage, float playerZ) {
         float farScale = FOCAL_LENGTH / farZ;
 
         float roadW = ROAD_WIDTH * scale;
-        float bottomY = HORIZON_Y + CAMERA_HEIGHT * scale;
-        float topY = HORIZON_Y + CAMERA_HEIGHT * farScale;
+        float hillOffset = cumHill[n] * scale * 500.0f;
+        float farHillOffset = (n + 1 < DRAW_DISTANCE) ? cumHill[n + 1] * farScale * 500.0f : hillOffset;
+
+        float bottomY = HORIZON_Y + CAMERA_HEIGHT * scale - hillOffset;
+        float topY = HORIZON_Y + CAMERA_HEIGHT * farScale - farHillOffset;
         float segH = bottomY - topY;
         if (segH < 1.0f) segH = 1.0f;
 
@@ -126,34 +132,27 @@ void render_draw_road(const Render *render, const Stage *stage, float playerZ) {
         Color roadColor = stripe ? (Color){ 100, 100, 100, 255 } : (Color){ 80, 80, 80, 255 };
         Color grassColor = stripe ? COLOR_GRASS : (Color){ 20, 120, 20, 255 };
 
-        if (bottomY > HORIZON_Y) {
-            float drawY = (topY > HORIZON_Y) ? topY : HORIZON_Y;
+        if (bottomY > HORIZON_Y - 100) {
+            float drawY = (topY > HORIZON_Y - 100) ? topY : HORIZON_Y - 100;
             float drawH = bottomY - drawY;
             if (drawH > 0) {
-                // Grass
                 DrawRectangle(0, (int)drawY, SCREEN_WIDTH, (int)(drawH + 1), grassColor);
 
-                // Rumble strips
                 float edgeW = roadW * 0.06f;
                 DrawRectangle((int)(screenX - roadW / 2), (int)drawY, (int)(edgeW + 1), (int)(drawH + 1), shoulderL);
                 DrawRectangle((int)(screenX + roadW / 2 - edgeW), (int)drawY, (int)(edgeW + 1), (int)(drawH + 1), shoulderR);
 
-                // Road surface
                 float innerW = roadW * 0.88f;
                 DrawRectangle((int)(screenX - innerW / 2), (int)drawY, (int)(innerW + 1), (int)(drawH + 1), roadColor);
 
-                // Lane markings (dashed, scroll with playerZ)
                 float laneW = roadW * 0.02f;
                 float lanePos1 = screenX - roadW * 0.25f;
                 float lanePos2 = screenX + roadW * 0.25f;
 
                 float dashLen = SEGMENT_LENGTH * 6.0f;
-                float dashPos = fmodf(playerZ, dashLen * 2);
-                float segStart = (n + 1) * SEGMENT_LENGTH - playerOffset;
-                float segEnd = segStart + SEGMENT_LENGTH;
-                float dashStart = dashPos - playerOffset + n * SEGMENT_LENGTH;
-                bool visible1 = fmodf(dashStart + SEGMENT_LENGTH * 0.5f, dashLen * 2) < dashLen;
-                bool visible2 = fmodf(dashStart + SEGMENT_LENGTH * 0.5f + dashLen, dashLen * 2) < dashLen;
+                float dashStart = fmodf(playerZ, dashLen * 2) + n * SEGMENT_LENGTH;
+                bool visible1 = fmodf(dashStart, dashLen * 2) < dashLen;
+                bool visible2 = fmodf(dashStart + dashLen, dashLen * 2) < dashLen;
 
                 if (visible1 && segH > 2.0f) {
                     DrawRectangle((int)(lanePos1 - laneW / 2), (int)(drawY + segH * 0.2f), (int)laneW, (int)(segH * 0.6f), laneMark);
