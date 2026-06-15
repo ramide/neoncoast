@@ -280,6 +280,11 @@ int main(void) {
             case RACING:
                 render_draw_sky(&render);
                 render_draw_road(&render, &race.stage, race.racers[0].pos.z);
+                for (int r = 1; r < MAX_RACERS; r++) {
+                    render_draw_opponent(&race.stage, race.racers[r].pos.x,
+                        race.racers[r].pos.z, race.racers[r].car.color, race.racers[0].pos.z);
+                }
+                render_draw_car(input.state.steer, race.racers[0].car.color, race.racers[0].speed);
                 ui_draw_hud(&race, input_get_active(&input));
                 break;
             case FINISH_SCREEN:
