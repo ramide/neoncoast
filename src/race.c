@@ -7,7 +7,7 @@
 #define ACCEL_RATE 2000.0f
 #define BRAKE_RATE 1600.0f
 #define FRICTION 0.985f
-#define STEER_SPEED 3.0f
+#define STEER_SPEED 5.0f
 #define GEAR_COUNT 6
 #define GEAR_RPM_SHIFT 0.85f
 #define GEAR_SHIFT_COOLDOWN 0.3f
@@ -286,9 +286,9 @@ static void update_racer(Racer *racer, float dt, InputState input, const Stage *
             racer->speed *= powf(FRICTION, dt * 60);
         }
 
-        racer->smoothedSteer += (input.steer - racer->smoothedSteer) * fminf(1.0f, dt * 8.0f);
+        racer->smoothedSteer += (input.steer - racer->smoothedSteer) * fminf(1.0f, dt * 15.0f);
         racer->steer += racer->smoothedSteer * STEER_SPEED * dt;
-        racer->steer *= powf(0.90f, dt * 60);
+        racer->steer *= pow(0.97f, dt * 60.0f);
 
         float speedRatio = racer->speed / (MAX_SPEED * racer->car.stats.speed);
         if (input.handbrake && speedRatio > 0.3f && fabsf(racer->steer) > 0.1f) {
@@ -338,12 +338,19 @@ static void update_racer(Racer *racer, float dt, InputState input, const Stage *
     }
 
     racer->pos.z += racer->speed * dt;
-    racer->pos.x += racer->steer * racer->speed * dt * 0.5f + racer->driftAngle * racer->speed * dt * 0.3f;
+    racer->pos.x += racer->steer * racer->speed * dt * 0.8f + racer->driftAngle * racer->speed * dt * 0.3f;
 
     float roadHalfWidth = ROAD_WIDTH * 0.4f;
+    float boundary = roadHalfWidth - 100.0f;
+    if (fabsf(racer->pos.x) > boundary) {
+        float overshoot = fabsf(racer->pos.x) - boundary;
+        float pushForce = overshoot * 0.5f;
+        racer->pos.x -= copysignf(pushForce * dt * 15.0f, racer->pos.x);
+        racer->speed *= 0.96f;
+    }
     if (fabsf(racer->pos.x) > roadHalfWidth) {
-        racer->speed *= 0.92f;
         racer->pos.x = copysignf(roadHalfWidth, racer->pos.x);
+        racer->speed *= 0.90f;
     }
 
     float lapDistance = TOTAL_SEGMENTS * SEGMENT_LENGTH;
