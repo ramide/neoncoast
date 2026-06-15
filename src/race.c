@@ -248,7 +248,6 @@ void race_generate_scenery(Race *race) {
     }
 
     // Second pass: close scenery near road (houses, lamps) - visible at close range
-    StageType stageType = race->stage.type;
     for (int i = 0; i < MAX_SCENERY && race->sceneryCount < MAX_SCENERY; i++) {
         SceneryObject *s = &race->scenery[race->sceneryCount];
         s->worldZ = (float)(rand() % TOTAL_SEGMENTS) * SEGMENT_LENGTH;
