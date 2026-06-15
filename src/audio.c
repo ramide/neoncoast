@@ -55,6 +55,8 @@ void audio_init(AudioEngine *engine) {
     engine->sfxLoaded = false;
     InitAudioDevice();
 
+    if (!IsAudioDeviceReady()) return;
+
     Wave countWave = wave_generate_sine(600.0f, 0.15f, 0.5f);
     Wave goWave = wave_generate_sine(880.0f, 0.3f, 0.6f);
     Wave crashWave = wave_generate_noise(0.2f, 0.7f);
@@ -72,6 +74,7 @@ void audio_init(AudioEngine *engine) {
 }
 
 void audio_play(AudioEngine *engine, StageType stage) {
+    if (!IsAudioDeviceReady()) return;
     if (!engine->sfxLoaded) return;
     if (engine->playing) {
         StopMusicStream(engine->music);
@@ -79,6 +82,10 @@ void audio_play(AudioEngine *engine, StageType stage) {
     }
     engine->currentTrack = (int)stage % MAX_TRACKS;
     engine->music = LoadMusicStream(trackFiles[engine->currentTrack]);
+    if (engine->music.ctxType == 0 || engine->music.frameCount == 0) {
+        engine->playing = false;
+        return;
+    }
     SetMusicVolume(engine->music, engine->masterVolume);
     PlayMusicStream(engine->music);
     engine->playing = true;
@@ -86,7 +93,9 @@ void audio_play(AudioEngine *engine, StageType stage) {
 
 void audio_update(AudioEngine *engine, float dt) {
     (void)dt;
+    if (!IsAudioDeviceReady()) return;
     if (!engine->playing || !engine->sfxLoaded) return;
+    if (engine->music.ctxType == 0) return;
     UpdateMusicStream(engine->music);
     if (!IsMusicStreamPlaying(engine->music)) {
         PlayMusicStream(engine->music);
