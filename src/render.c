@@ -1,6 +1,10 @@
 #include "render.h"
 #include <math.h>
 
+#define HORIZON_Y      (SCREEN_HEIGHT * 0.45f)
+#define FOCAL_LENGTH   300.0f
+#define CAMERA_HEIGHT  1500.0f
+
 void render_init(Render *render) {
     render->camera = (Camera3D){
         .position = (Vector3){ 0, 1000, -2000 },
@@ -55,26 +59,50 @@ void render_draw_sky(const Render *render) {
 }
 
 void render_draw_road(const Render *render, const Stage *stage, float playerZ) {
-    float baseY = SCREEN_HEIGHT * 0.6f;
+    int playerSeg = (int)(playerZ / SEGMENT_LENGTH);
+    float playerOffset = fmodf(playerZ, SEGMENT_LENGTH);
 
-    for (int n = DRAW_DISTANCE; n > 0; n--) {
-        int segIndex = ((int)playerZ / (int)SEGMENT_LENGTH + n) % TOTAL_SEGMENTS;
+    float dx[DRAW_DISTANCE];
+    float dy[DRAW_DISTANCE];
+    float totalDx = 0, totalDy = 0;
+
+    for (int n = 0; n < DRAW_DISTANCE; n++) {
+        int segIndex = (playerSeg + n + 1) % TOTAL_SEGMENTS;
         Segment *seg = road_get_segment(stage, segIndex);
+        totalDx += seg->curve;
+        totalDy += seg->hill;
+        dx[n] = totalDx;
+        dy[n] = totalDy;
+    }
 
-        float z = (float)n * SEGMENT_LENGTH - fmodf(playerZ, SEGMENT_LENGTH);
+    for (int n = DRAW_DISTANCE - 1; n >= 0; n--) {
+        float z = (n + 1) * SEGMENT_LENGTH - playerOffset;
         if (z <= 0) continue;
 
-        float scale = 1.0f / z;
-        float screenX = SCREEN_WIDTH / 2.0f + seg->curve * scale * 50000.0f;
-        float screenW = ROAD_WIDTH * scale;
-        float screenH = 2.0f;
+        float scale = FOCAL_LENGTH / z;
+        float farZ = z + SEGMENT_LENGTH;
+        float farScale = FOCAL_LENGTH / farZ;
 
-        int stripe = ((int)playerZ / (int)SEGMENT_LENGTH + n) % 2;
+        float roadW = ROAD_WIDTH * scale;
+        float bottomY = HORIZON_Y + CAMERA_HEIGHT * scale + dy[n] * scale * 0.1f;
+        float topY = HORIZON_Y + CAMERA_HEIGHT * farScale + dy[n] * farScale * 0.1f;
+        float segH = bottomY - topY;
+        if (segH < 1.0f) segH = 1.0f;
+
+        float screenX = SCREEN_WIDTH * 0.5f + dx[n] * scale * SEGMENT_LENGTH;
+
+        int segIndex = (playerSeg + n + 1) % TOTAL_SEGMENTS;
+        int stripe = segIndex % 2;
         Color roadColor = stripe ? (Color){ 100, 100, 100, 255 } : (Color){ 80, 80, 80, 255 };
         Color grassColor = stripe ? COLOR_GRASS : (Color){ 20, 120, 20, 255 };
 
-        DrawRectangle(0, (int)(baseY - screenH), SCREEN_WIDTH, (int)(screenH + 1), grassColor);
-        DrawRectangle((int)(screenX - screenW / 2), (int)(baseY - screenH),
-                     (int)screenW, (int)(screenH + 1), roadColor);
+        if (bottomY > HORIZON_Y) {
+            float drawY = (topY > HORIZON_Y) ? topY : HORIZON_Y;
+            float drawH = bottomY - drawY;
+            if (drawH > 0) {
+                DrawRectangle(0, (int)drawY, SCREEN_WIDTH, (int)(drawH + 1), grassColor);
+                DrawRectangle((int)(screenX - roadW / 2), (int)drawY, (int)(roadW + 1), (int)(drawH + 1), roadColor);
+            }
+        }
     }
 }
