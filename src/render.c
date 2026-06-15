@@ -180,16 +180,16 @@ void render_draw_opponent(const Stage *stage, float worldX, float worldZ, Color 
     Segment *seg = road_get_segment(stage, idx);
     screenX += seg->curve * scale * SEGMENT_LENGTH;
 
-    float carW = 108.0f * scale;
-    float carH = 54.0f * scale;
+    float carW = 150.0f * scale;
+    float carH = 70.0f * scale;
     if (carW < 6.0f) carW = 6.0f;
     if (carH < 3.0f) carH = 3.0f;
 
     DrawRectangle((int)(screenX - carW / 2), (int)(screenY - carH / 2), (int)carW, (int)carH, color);
-    DrawRectangle((int)(screenX - carW * 0.3f), (int)(screenY - carH * 0.55f - 10 * scale),
-                  (int)(carW * 0.6f), (int)(12 * scale), ColorBrightness(color, -40));
-    DrawRectangle((int)(screenX - carW * 0.25f), (int)(screenY - carH * 0.55f - 8 * scale),
-                  (int)(carW * 0.5f), (int)(8 * scale), (Color){ 100, 180, 255, 180 });
+    DrawRectangle((int)(screenX - carW * 0.3f), (int)(screenY - carH * 0.55f - 14 * scale),
+                  (int)(carW * 0.6f), (int)(16 * scale), ColorBrightness(color, -40));
+    DrawRectangle((int)(screenX - carW * 0.25f), (int)(screenY - carH * 0.55f - 12 * scale),
+                  (int)(carW * 0.5f), (int)(12 * scale), (Color){ 100, 180, 255, 180 });
     DrawCircle((int)(screenX - carW * 0.35f), (int)(screenY + carH * 0.35f), carW * 0.10f, BLACK);
     DrawCircle((int)(screenX + carW * 0.35f), (int)(screenY + carH * 0.35f), carW * 0.10f, BLACK);
     DrawCircle((int)(screenX - carW * 0.3f), (int)(screenY + carH * 0.45f), carW * 0.06f, RED);
@@ -210,8 +210,8 @@ void render_draw_traffic(const Stage *stage, float worldX, float worldZ, Color c
     Segment *seg = road_get_segment(stage, idx);
     screenX += seg->curve * scale * SEGMENT_LENGTH;
 
-    float carW = 90.0f * scale;
-    float carH = 40.0f * scale;
+    float carW = 130.0f * scale;
+    float carH = 55.0f * scale;
     if (carW < 5.0f) carW = 5.0f;
     if (carH < 3.0f) carH = 3.0f;
 
