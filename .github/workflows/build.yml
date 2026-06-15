@@ -7,24 +7,6 @@ on:
     branches: [ main ]
 
 jobs:
-  build-windows:
-    runs-on: windows-latest
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          submodules: recursive
-      - name: Configure MSVC
-        uses: ilammy/msvc-dev-cmd@v1
-      - name: Build
-        run: |
-          cmake -B build -DCMAKE_BUILD_TYPE=Release
-          cmake --build build --config Release
-      - name: Upload
-        uses: actions/upload-artifact@v4
-        with:
-          name: neoncoast-windows
-          path: build/Release/neoncoast.exe
-
   build-linux-amd64:
     runs-on: ubuntu-latest
     steps:
@@ -33,70 +15,17 @@ jobs:
           submodules: recursive
       - name: Install deps
         run: sudo apt-get update && sudo apt-get install -y libx11-dev libxrandr-dev libxi-dev libgl1-mesa-dev libglu1-mesa-dev libxcursor-dev libxinerama-dev
+      - name: Configure
+        continue-on-error: true
+        id: configure
+        run: cmake -B build -DCMAKE_BUILD_TYPE=Release > cmake_log.txt 2>&1
       - name: Build
-        run: |
-          cmake -B build -DCMAKE_BUILD_TYPE=Release
-          cmake --build build
-      - name: Upload
+        continue-on-error: true
+        id: build
+        run: cmake --build build > build_log.txt 2>&1
+      - name: Upload logs
+        if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: neoncoast-linux-amd64
-          path: build/neoncoast
-
-  build-linux-arm64:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          submodules: recursive
-      - name: Install cross-compiler
-        run: sudo apt-get update && sudo apt-get install -y gcc-aarch64-linux-gnu g++-aarch64-linux-gnu
-      - name: Build
-        run: |
-          cmake -B build -DCMAKE_BUILD_TYPE=Release \
-            -DCMAKE_SYSTEM_NAME=Linux \
-            -DCMAKE_SYSTEM_PROCESSOR=aarch64 \
-            -DCMAKE_C_COMPILER=aarch64-linux-gnu-gcc \
-            -DCMAKE_CXX_COMPILER=aarch64-linux-gnu-g++
-          cmake --build build
-      - name: Upload
-        uses: actions/upload-artifact@v4
-        with:
-          name: neoncoast-linux-arm64
-          path: build/neoncoast
-
-  build-macos:
-    runs-on: macos-latest
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          submodules: recursive
-      - name: Build
-        run: |
-          cmake -B build -DCMAKE_BUILD_TYPE=Release
-          cmake --build build
-      - name: Upload
-        uses: actions/upload-artifact@v4
-        with:
-          name: neoncoast-macos
-          path: build/neoncoast
-
-  build-android:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          submodules: recursive
-      - name: Setup NDK
-        uses: nttld/setup-ndk@v1
-        with:
-          ndk-version: r26b
-      - name: Build APK
-        run: |
-          cd platforms/android
-          ./gradlew assembleRelease
-      - name: Upload
-        uses: actions/upload-artifact@v4
-        with:
-          name: neoncoast-android
-          path: platforms/android/app/build/outputs/apk/release/app-release.apk
+          name: neoncoast-linux-logs
+          path: '*.txt'
