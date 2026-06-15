@@ -27,25 +27,64 @@ void render_init(Render *render) {
     }
 }
 
+static Color color_lerp(Color a, Color b, float t) {
+    return (Color){
+        (unsigned char)(a.r + (b.r - a.r) * t),
+        (unsigned char)(a.g + (b.g - a.g) * t),
+        (unsigned char)(a.b + (b.b - a.b) * t),
+        255
+    };
+}
+
 Color render_get_sky_color(float timeOfDay) {
-    if (timeOfDay < 0.2f) return COLOR_SKY_NIGHT;
-    if (timeOfDay < 0.3f) return COLOR_SKY_DAWN;
-    if (timeOfDay < 0.7f) return COLOR_SKY_DAY;
-    if (timeOfDay < 0.8f) return COLOR_SKY_DUSK;
-    return COLOR_SKY_NIGHT;
+    struct { float t; Color c; } kf[] = {
+        { 0.00f, (Color){ 25, 25, 60, 255 } },
+        { 0.18f, (Color){ 25, 25, 60, 255 } },
+        { 0.25f, (Color){ 60, 40, 50, 255 } },
+        { 0.30f, (Color){ 255, 120, 60, 255 } },
+        { 0.35f, (Color){ 135, 206, 235, 255 } },
+        { 0.65f, (Color){ 135, 206, 235, 255 } },
+        { 0.70f, (Color){ 255, 100, 50, 255 } },
+        { 0.78f, (Color){ 60, 40, 50, 255 } },
+        { 0.82f, (Color){ 25, 25, 60, 255 } },
+        { 1.00f, (Color){ 25, 25, 60, 255 } },
+    };
+    int n = sizeof(kf) / sizeof(kf[0]);
+    int i;
+    for (i = 0; i < n - 1; i++) {
+        if (timeOfDay >= kf[i].t && timeOfDay <= kf[i+1].t) break;
+    }
+    if (i >= n - 1) i = n - 2;
+    float t = (timeOfDay - kf[i].t) / (kf[i+1].t - kf[i].t);
+    return color_lerp(kf[i].c, kf[i+1].c, t);
 }
 
 Color render_get_ambient_color(float timeOfDay) {
-    if (timeOfDay < 0.2f || timeOfDay > 0.85f) return (Color){ 40, 40, 80, 255 };
-    if (timeOfDay < 0.3f || timeOfDay > 0.75f) return (Color){ 120, 100, 80, 255 };
-    return (Color){ 200, 200, 220, 255 };
+    struct { float t; Color c; } kf[] = {
+        { 0.00f, (Color){ 40, 40, 80, 255 } },
+        { 0.18f, (Color){ 40, 40, 80, 255 } },
+        { 0.25f, (Color){ 80, 60, 50, 255 } },
+        { 0.30f, (Color){ 100, 80, 60, 255 } },
+        { 0.35f, (Color){ 200, 200, 220, 255 } },
+        { 0.65f, (Color){ 200, 200, 220, 255 } },
+        { 0.70f, (Color){ 100, 80, 60, 255 } },
+        { 0.78f, (Color){ 60, 50, 40, 255 } },
+        { 0.82f, (Color){ 40, 40, 80, 255 } },
+        { 1.00f, (Color){ 40, 40, 80, 255 } },
+    };
+    int n = sizeof(kf) / sizeof(kf[0]);
+    int i;
+    for (i = 0; i < n - 1; i++) {
+        if (timeOfDay >= kf[i].t && timeOfDay <= kf[i+1].t) break;
+    }
+    if (i >= n - 1) i = n - 2;
+    float t = (timeOfDay - kf[i].t) / (kf[i+1].t - kf[i].t);
+    return color_lerp(kf[i].c, kf[i+1].c, t);
 }
 
 void render_update(Render *render, float dt, const Stage *stage) {
-    render->timeOfDay += dt * 0.002f;
-    if (render->timeOfDay > stage->timeEnd) {
-        render->timeOfDay = stage->timeStart;
-    }
+    render->timeOfDay += dt * 0.0003f;
+    if (render->timeOfDay > 1.0f) render->timeOfDay -= 1.0f;
     render->skyColor = render_get_sky_color(render->timeOfDay);
     render->ambientColor = render_get_ambient_color(render->timeOfDay);
 
