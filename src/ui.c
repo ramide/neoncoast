@@ -1,6 +1,7 @@
 #include "ui.h"
 #include <stdio.h>
 #include <string.h>
+#include <math.h>
 
 #define MENU_ITEM_HEIGHT 40
 #define MENU_START_Y 200
@@ -182,6 +183,13 @@ void ui_draw_hud(const Race *race, InputSource source) {
     if (player->bestLap < 9999.0f) {
         DrawText(TextFormat("Best: %.1fs", player->bestLap), 20, 135, 16, GREEN);
     }
+
+    const char *gearLabels[] = { "N", "1", "2", "3", "4", "5", "6" };
+    DrawText(TextFormat("Gear: %s", gearLabels[player->currentGear]), 20, 160, 20, YELLOW);
+
+    DrawRectangle(20, 185, 100, 12, DARKGRAY);
+    Color rpmColor = player->gearRPM > 0.8f ? RED : (player->gearRPM > 0.6f ? YELLOW : GREEN);
+    DrawRectangle(20, 185, (int)(100 * player->gearRPM), 12, rpmColor);
 }
 
 void ui_draw_finish_screen(const Race *race, MenuState *menu, InputSource source) {
