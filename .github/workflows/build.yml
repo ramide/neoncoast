@@ -17,7 +17,7 @@ jobs:
         uses: ilammy/msvc-dev-cmd@v1
       - name: Build
         run: |
-          cmake -B build -DCMAKE_BUILD_TYPE=Release
+          cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_POLICY_VERSION_MINIMUM=3.5
           cmake --build build --config Release
       - name: Upload
         uses: actions/upload-artifact@v4
@@ -35,7 +35,7 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y libx11-dev libxrandr-dev libxi-dev libgl1-mesa-dev libglu1-mesa-dev libxcursor-dev libxinerama-dev
       - name: Build
         run: |
-          cmake -B build -DCMAKE_BUILD_TYPE=Release
+          cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_POLICY_VERSION_MINIMUM=3.5
           cmake --build build
       - name: Upload
         uses: actions/upload-artifact@v4
@@ -53,7 +53,7 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y gcc-aarch64-linux-gnu g++-aarch64-linux-gnu
       - name: Build
         run: |
-          cmake -B build -DCMAKE_BUILD_TYPE=Release \
+          cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_POLICY_VERSION_MINIMUM=3.5 \
             -DCMAKE_SYSTEM_NAME=Linux \
             -DCMAKE_SYSTEM_PROCESSOR=aarch64 \
             -DCMAKE_C_COMPILER=aarch64-linux-gnu-gcc \
@@ -73,15 +73,10 @@ jobs:
           submodules: recursive
       - name: Build
         run: |
-          cmake -B build -DCMAKE_BUILD_TYPE=Release
+          cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_POLICY_VERSION_MINIMUM=3.5
           cmake --build build
       - name: Upload
         uses: actions/upload-artifact@v4
         with:
           name: neoncoast-macos
           path: build/neoncoast
-
-  # build-android:
-  #   Android build requires raylib's Android template setup.
-  #   See https://github.com/raysan5/raylib/tree/5.0/projects/Android
-  #   To build: cd platforms/android && ./gradlew assembleRelease
