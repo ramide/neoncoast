@@ -3,8 +3,8 @@
 #include <string.h>
 #include <stdlib.h>
 
-#define MAX_SPEED 600.0f
-#define ACCEL_RATE 300.0f
+#define MAX_SPEED 1200.0f
+#define ACCEL_RATE 500.0f
 #define BRAKE_RATE 400.0f
 #define FRICTION 0.985f
 #define STEER_SPEED 3.0f
@@ -61,7 +61,7 @@ void race_generate_traffic(Race *race) {
         TrafficCar *t = &race->traffic[race->trafficCount];
         float seg = (float)(rand() % (TOTAL_SEGMENTS - 20)) + 10;
         t->pos.z = seg * SEGMENT_LENGTH + (rand() % (int)SEGMENT_LENGTH);
-        t->pos.x = (rand() % 3 - 1) * 300.0f;
+        t->pos.x = (rand() % 5 - 2) * 500.0f;
         t->speed = 150.0f + (rand() % 100);
         t->color = trafficColors[rand() % 6];
         t->active = true;
@@ -84,7 +84,7 @@ void race_generate_scenery(Race *race) {
         SceneryObject *s = &race->scenery[race->sceneryCount];
         s->worldZ = (float)(rand() % TOTAL_SEGMENTS) * SEGMENT_LENGTH;
         s->rightSide = (rand() % 2 == 0);
-        float roadEdgeOffset = 800.0f + (rand() % 1200);
+        float roadEdgeOffset = 2000.0f + (rand() % 2000);
 
         if (rand() % 3 == 0) {
             s->type = SCENERY_BUILDING;

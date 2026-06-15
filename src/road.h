@@ -4,7 +4,7 @@
 #include "common.h"
 
 #define SEGMENT_LENGTH 200.0f
-#define ROAD_WIDTH 2000.0f
+#define ROAD_WIDTH 5000.0f
 #define DRAW_DISTANCE 150
 #define TOTAL_SEGMENTS 6000
 
