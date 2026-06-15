@@ -17,6 +17,8 @@ void render_init(Render *render) {
     render->timeOfDay = 0.3f;
     render->skyColor = render_get_sky_color(render->timeOfDay);
     render->ambientColor = render_get_ambient_color(render->timeOfDay);
+    render->shakeTimer = 0;
+    render->shakeIntensity = 0;
 
     for (int i = 0; i < MAX_CLOUDS; i++) {
         render->clouds[i].x = (float)(rand() % 4000) - 2000;
@@ -95,6 +97,18 @@ void render_update(Render *render, float dt, const Stage *stage) {
     render->moonPosition = (Vector3){
         cosf(sunAngle + PI) * 5000, sinf(sunAngle + PI) * 5000, 0
     };
+    if (render->shakeTimer > 0) {
+        render->shakeTimer -= dt;
+        if (render->shakeTimer < 0) {
+            render->shakeTimer = 0;
+            render->shakeIntensity = 0;
+        }
+    }
+}
+
+void render_shake(Render *render, float intensity, float duration) {
+    render->shakeIntensity = intensity;
+    render->shakeTimer = duration;
 }
 
 void render_draw_sky(const Render *render) {

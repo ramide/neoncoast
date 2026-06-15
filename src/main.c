@@ -189,6 +189,7 @@ int main(void) {
                     race_update(&race, FIXED_DT, input.state);
                     if (race.playerCollided) {
                         audio_sfx_collision(&audio);
+                        render_shake(&render, 1.0f, 0.3f);
                         race.playerCollided = false;
                     }
                     render_update(&render, FIXED_DT, &race.stage);
@@ -364,6 +365,10 @@ int main(void) {
                 }
                 render_draw_car(input.state.steer, race.racers[0].car.color, race.racers[0].speed);
                 ui_draw_hud(&race, input_get_active(&input));
+                if (race.collisionTimer > 0) {
+                    unsigned char alpha = (unsigned char)(race.collisionTimer * 2.0f * 120);
+                    DrawRectangle(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, (Color){ 255, 50, 50, alpha });
+                }
                 break;
             case PAUSED:
                 render_draw_sky(&render);
@@ -382,6 +387,10 @@ int main(void) {
                         race.racers[r].pos.z, race.racers[r].car.color, race.racers[0].pos.z);
                 }
                 render_draw_car(input.state.steer, race.racers[0].car.color, race.racers[0].speed);
+                if (race.collisionTimer > 0) {
+                    unsigned char alpha = (unsigned char)(race.collisionTimer * 2.0f * 120);
+                    DrawRectangle(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, (Color){ 255, 50, 50, alpha });
+                }
                 ui_draw_pause_menu(&menu, input_get_active(&input));
                 break;
             case FINISH_SCREEN:

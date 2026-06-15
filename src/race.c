@@ -386,6 +386,7 @@ static void check_collisions(Race *race) {
             t->speed -= 20.0f;
             if (t->speed < 80.0f) t->speed = 80.0f;
             race->playerCollided = true;
+            race->collisionTimer = 0.5f;
         }
     }
 
@@ -396,6 +397,30 @@ static void check_collisions(Race *race) {
         if (dz < 300.0f && dx < 400.0f) {
             player->speed *= 0.8f;
             if (player->speed < 120.0f) player->speed = 120.0f;
+            race->playerCollided = true;
+            race->collisionTimer = 0.5f;
+        }
+    }
+
+    // Scenery collision (obstacles on roadside)
+    for (int i = 0; i < race->sceneryCount; i++) {
+        SceneryObject *s = &race->scenery[i];
+        if (s->type != SCENERY_TREE && s->type != SCENERY_ROCK && 
+            s->type != SCENERY_CACTUS && s->type != SCENERY_BUILDING &&
+            s->type != SCENERY_HOUSE && s->type != SCENERY_TEMPLE) continue;
+        float dz = fabsf(player->pos.z - s->worldZ);
+        float dx = fabsf(player->pos.x - s->worldX);
+        float collDist = 40.0f + s->scale * 30.0f;
+        if (dz < collDist * 0.5f && dx < collDist) {
+            player->speed *= 0.5f;
+            if (player->pos.x > s->worldX) {
+                player->pos.x += 50.0f;
+            } else {
+                player->pos.x -= 50.0f;
+            }
+            race->playerCollided = true;
+            race->collisionTimer = 0.5f;
+            break;
         }
     }
 }
@@ -446,6 +471,7 @@ void race_update(Race *race, float dt, InputState input) {
     }
 
     check_collisions(race);
+    if (race->collisionTimer > 0) race->collisionTimer -= dt;
 
     if (race->racers[race->playerIndex].finished) {
         race->finished = true;
