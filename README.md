@@ -12,7 +12,7 @@ A cozy, relaxed OutRun-style 3D racing game built in C with raylib.
 - Hill/elevation changes in road
 - Cloud rendering with pseudo-3D perspective
 - Pause menu (resume, restart, settings, quit)
-- Procedural synthwave music engine with regional variants
+- OGG music by congusbongus (CC0)
 - Dynamic day/night cycle
 - Keyboard + gamepad controls with on-the-fly switching
 - Attract mode with road background, full menu system, high scores
@@ -52,3 +52,9 @@ cd platforms/android
 ## License
 
 MIT
+
+## Credits
+
+- Music by [congusbongus](https://opengameart.org/users/congusbongus) (CC0):
+  - *Midnight Drive*
+  - *Ganymede*

@@ -20,6 +20,17 @@ int main(void) {
     SetTargetFPS(TARGET_FPS);
     srand((unsigned int)time(NULL));
 
+    Image icon = GenImageColor(64, 64, (Color){ 10, 0, 25, 255 });
+    ImageDrawCircle(&icon, 32, 32, 28, (Color){ 0, 200, 255, 60 });
+    ImageDrawCircle(&icon, 32, 32, 24, (Color){ 0, 220, 255, 255 });
+    ImageDrawCircle(&icon, 32, 32, 18, (Color){ 10, 0, 25, 255 });
+    ImageDrawCircle(&icon, 32, 32, 16, (Color){ 255, 50, 150, 40 });
+    ImageDrawCircle(&icon, 32, 32, 14, (Color){ 255, 50, 150, 255 });
+    ImageDrawCircle(&icon, 32, 32, 10, (Color){ 10, 0, 25, 255 });
+    ImageDrawCircle(&icon, 32, 32, 6,  (Color){ 255, 255, 255, 200 });
+    SetWindowIcon(icon);
+    UnloadImage(icon);
+
     Game game;
     game_init(&game);
 
