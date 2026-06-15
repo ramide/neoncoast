@@ -294,6 +294,7 @@ int main(void) {
         switch (game.current) {
             case BOOT:
                 render_draw_sky(&render);
+                render_draw_background(&render, game.stateTime * 200.0f, selectedStage);
                 render_draw_road(&render, &race.stage, game.stateTime * 200.0f);
                 render_draw_clouds(&render, game.stateTime * 200.0f);
                 DrawText("Neon Coast", 350, 150, 48, YELLOW);
@@ -301,6 +302,7 @@ int main(void) {
                 break;
             case ATTRACT_MODE:
                 render_draw_sky(&render);
+                render_draw_background(&render, game.stateTime * 200.0f, selectedStage);
                 render_draw_road(&render, &race.stage, game.stateTime * 200.0f);
                 render_draw_clouds(&render, game.stateTime * 200.0f);
                 ui_draw_attract_mode(game.stateTime, input_get_active(&input));
@@ -319,11 +321,13 @@ int main(void) {
                 break;
             case COUNTDOWN:
                 render_draw_sky(&render);
+                render_draw_background(&render, race.racers[0].pos.z, selectedStage);
                 render_draw_road(&render, &race.stage, race.racers[0].pos.z);
                 ui_draw_countdown(race.countdown);
                 break;
             case RACING:
                 render_draw_sky(&render);
+                render_draw_background(&render, race.racers[0].pos.z, selectedStage);
                 render_draw_clouds(&render, race.racers[0].pos.z);
                 render_draw_road(&render, &race.stage, race.racers[0].pos.z);
                 render_draw_scenery(race.scenery, race.sceneryCount, &race.stage, race.racers[0].pos.z);
@@ -342,6 +346,7 @@ int main(void) {
                 break;
             case PAUSED:
                 render_draw_sky(&render);
+                render_draw_background(&render, race.racers[0].pos.z, selectedStage);
                 render_draw_clouds(&render, race.racers[0].pos.z);
                 render_draw_road(&render, &race.stage, race.racers[0].pos.z);
                 render_draw_scenery(race.scenery, race.sceneryCount, &race.stage, race.racers[0].pos.z);

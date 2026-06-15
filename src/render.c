@@ -62,6 +62,95 @@ void render_draw_sky(const Render *render) {
     DrawRectangle(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, render->skyColor);
 }
 
+void render_draw_background(const Render *render, float playerZ, StageType stage) {
+    Color mountColor;
+    Color hillColor;
+    switch (stage) {
+        case STAGE_COASTAL:
+        case STAGE_HAWAII:
+            mountColor = (Color){ 60, 100, 130, 255 };
+            hillColor = (Color){ 40, 120, 40, 255 };
+            break;
+        case STAGE_TOKYO:
+        case STAGE_NYC:
+            mountColor = (Color){ 20, 20, 40, 255 };
+            hillColor = (Color){ 30, 30, 50, 255 };
+            break;
+        case STAGE_INDIA:
+            mountColor = (Color){ 160, 100, 60, 255 };
+            hillColor = (Color){ 100, 140, 50, 255 };
+            break;
+        case STAGE_MEDITERRANEAN:
+            mountColor = (Color){ 140, 120, 100, 255 };
+            hillColor = (Color){ 60, 130, 60, 255 };
+            break;
+        case STAGE_SAHARA:
+            mountColor = (Color){ 180, 150, 80, 255 };
+            hillColor = (Color){ 160, 140, 60, 255 };
+            break;
+        case STAGE_GUATEMALA:
+            mountColor = (Color){ 40, 80, 100, 255 };
+            hillColor = (Color){ 30, 110, 40, 255 };
+            break;
+        default:
+            mountColor = (Color){ 60, 100, 130, 255 };
+            hillColor = (Color){ 40, 120, 40, 255 };
+            break;
+    }
+
+    if (render->timeOfDay < 0.2f || render->timeOfDay > 0.8f) {
+        mountColor = ColorBrightness(mountColor, -0.5f);
+        hillColor = ColorBrightness(hillColor, -0.5f);
+    } else if (render->timeOfDay < 0.3f || render->timeOfDay > 0.7f) {
+        mountColor = ColorBrightness(mountColor, -0.2f);
+        hillColor = ColorBrightness(hillColor, -0.2f);
+    }
+
+    float parallaxFar = 0.05f;
+    float parallaxMid = 0.15f;
+    float offsetFar = fmodf(playerZ * parallaxFar, 1500.0f);
+    float offsetMid = fmodf(playerZ * parallaxMid, 1000.0f);
+
+    for (int i = -2; i < 15; i++) {
+        float x = i * 140.0f - offsetFar;
+        float h = 120.0f + sinf(i * 1.7f + playerZ * 0.0003f) * 60.0f
+                  + sinf(i * 3.1f) * 30.0f;
+
+        Vector2 p1 = { x - 100, HORIZON_Y };
+        Vector2 p2 = { x + 100, HORIZON_Y };
+        Vector2 p3 = { x, HORIZON_Y - h };
+
+        DrawTriangle(p1, p2, p3, mountColor);
+
+        if (h > 150.0f && stage != STAGE_SAHARA) {
+            float capH = h * 0.15f;
+            Vector2 cp1 = { x - 40.0f, HORIZON_Y - h + capH };
+            Vector2 cp2 = { x + 40.0f, HORIZON_Y - h + capH };
+            Vector2 cp3 = { x, HORIZON_Y - h };
+            DrawTriangle(cp1, cp2, cp3, (Color){ 220, 230, 240, 180 });
+        }
+    }
+
+    for (int i = -2; i < 20; i++) {
+        float x = i * 90.0f - offsetMid;
+        float h = 60.0f + sinf(i * 2.3f + playerZ * 0.0008f) * 30.0f
+                  + sinf(i * 4.7f) * 15.0f;
+
+        Vector2 p1 = { x - 70, HORIZON_Y };
+        Vector2 p2 = { x + 70, HORIZON_Y };
+        Vector2 p3 = { x, HORIZON_Y - h };
+
+        DrawTriangle(p1, p2, p3, hillColor);
+    }
+
+    if (stage == STAGE_COASTAL || stage == STAGE_HAWAII || stage == STAGE_MEDITERRANEAN) {
+        Color oceanColor = (render->timeOfDay < 0.3f || render->timeOfDay > 0.7f)
+            ? (Color){ 10, 40, 80, 200 }
+            : (Color){ 30, 120, 180, 200 };
+        DrawRectangle(0, (int)HORIZON_Y + 5, SCREEN_WIDTH, 30, oceanColor);
+    }
+}
+
 void render_draw_clouds(const Render *render, float playerZ) {
     for (int i = 0; i < MAX_CLOUDS; i++) {
         const Cloud *c = &render->clouds[i];

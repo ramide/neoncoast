@@ -26,6 +26,7 @@ typedef struct {
 void render_init(Render *render);
 void render_update(Render *render, float dt, const Stage *stage);
 void render_draw_sky(const Render *render);
+void render_draw_background(const Render *render, float playerZ, StageType stage);
 void render_draw_clouds(const Render *render, float playerZ);
 void render_draw_road(const Render *render, const Stage *stage, float playerZ);
 void render_draw_car(float steer, Color color, float speed);
