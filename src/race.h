@@ -23,14 +23,16 @@ typedef struct {
     Car car;
     float aiOffset;
     float aiSpeedMult;
-    float smoothedSteer;
+    float aiLaneTimer;
     int currentGear;
     float gearRPM;
     float gearShiftTime;
     bool autoshift;
-    bool isDrifting;
-    float driftAngle;
-    float driftScore;
+    int currentLane;         // -2=far left, -1=left, 0=center, 1=right, 2=far right
+    float targetX;           // world X position of target lane center
+    float laneSwitchTimer;   // countdown during lane switch for visual sway
+    bool steerPrevLeft;      // edge detection for left press
+    bool steerPrevRight;     // edge detection for right press
 } Racer;
 
 typedef struct {

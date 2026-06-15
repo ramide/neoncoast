@@ -587,9 +587,9 @@ void render_draw_scenery(const Render *render, SceneryObject *scenery, int count
     }
 }
 
-void render_draw_car(float steer, Color color, float speed) {
+void render_draw_car(float laneOffset, Color color, float speed) {
     float carY = SCREEN_HEIGHT * 0.78f;
-    float carX = SCREEN_WIDTH / 2.0f + steer * 120.0f;
+    float carX = SCREEN_WIDTH / 2.0f + laneOffset * 200.0f;
 
     float bodyW = 80.0f;
     float bodyH = 36.0f;

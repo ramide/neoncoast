@@ -7,7 +7,6 @@
 #define ACCEL_RATE 2000.0f
 #define BRAKE_RATE 1600.0f
 #define FRICTION 0.998f
-#define STEER_SPEED 5.0f
 #define GEAR_COUNT 6
 #define GEAR_RPM_SHIFT 0.85f
 #define GEAR_SHIFT_COOLDOWN 0.3f
@@ -39,6 +38,11 @@ void race_init(Race *race, StageType stageType, int playerCarIndex) {
         ai->isPlayer = false;
         ai->car = car_create((CarType)((i + playerCarIndex) % MAX_CARS), aiColors[i - 1]);
         ai->pos = (Vector3){ (float)((i - 2) * 400), 0, (float)(i * 500 + 800) };
+        ai->targetX = ai->pos.x;
+        ai->currentLane = (int)(ai->pos.x / 700.0f);
+        if (ai->currentLane < -2) ai->currentLane = -2;
+        if (ai->currentLane > 2) ai->currentLane = 2;
+        ai->aiLaneTimer = 2.0f + (float)(rand() % 300) / 100.0f;
         ai->lap = 1;
         ai->bestLap = 9999.0f;
         ai->aiSpeedMult = 0.85f + (i * 0.05f);
@@ -289,31 +293,35 @@ static void update_racer(Racer *racer, float dt, InputState input, const Stage *
             racer->speed *= powf(FRICTION, dt * 60);
         }
 
-        racer->smoothedSteer += (input.steer - racer->smoothedSteer) * fminf(1.0f, dt * 15.0f);
-        racer->steer += racer->smoothedSteer * STEER_SPEED * dt;
-        racer->steer *= pow(0.97f, dt * 60.0f);
-
-        float speedRatio = racer->speed / (MAX_SPEED * racer->car.stats.speed);
-        if (input.handbrake && speedRatio > 0.3f && fabsf(racer->steer) > 0.1f) {
-            racer->isDrifting = true;
-            racer->driftAngle += racer->steer * dt * 2.0f;
-            racer->driftAngle = fmaxf(-0.5f, fminf(0.5f, racer->driftAngle));
-            racer->driftScore += fabsf(racer->steer) * racer->speed * dt * 0.01f;
-        } else {
-            if (racer->isDrifting) {
-                racer->driftAngle *= 0.9f;
-                if (fabsf(racer->driftAngle) < 0.01f) {
-                    racer->isDrifting = false;
-                    racer->driftAngle = 0;
-                }
-            }
+        // Lane-switch steering
+        int newLane = racer->currentLane;
+        if (input.steer < -0.5f && !racer->steerPrevLeft) {
+            newLane--;
+            if (newLane < -2) newLane = -2;
         }
+        racer->steerPrevLeft = (input.steer < -0.5f);
+        if (input.steer > 0.5f && !racer->steerPrevRight) {
+            newLane++;
+            if (newLane > 2) newLane = 2;
+        }
+        racer->steerPrevRight = (input.steer > 0.5f);
+        if (newLane != racer->currentLane) {
+            racer->currentLane = newLane;
+            racer->targetX = racer->currentLane * 700.0f;
+            racer->laneSwitchTimer = 0.3f;
+        }
+        racer->pos.x += (racer->targetX - racer->pos.x) * fminf(1.0f, dt * 10.0f);
+        if (racer->laneSwitchTimer > 0) racer->laneSwitchTimer -= dt;
     } else {
         racer->speed = MAX_SPEED * racer->aiSpeedMult * racer->car.stats.speed;
-
-        Segment *seg = road_get_segment(stage, (int)racer->pos.z / (int)SEGMENT_LENGTH);
-        float targetX = seg->curve * 1000.0f + racer->aiOffset;
-        racer->steer = (targetX - racer->pos.x) * 0.001f;
+        racer->aiLaneTimer -= dt;
+        if (racer->aiLaneTimer <= 0) {
+            int newLane = rand() % 5 - 2;
+            racer->currentLane = newLane;
+            racer->targetX = racer->currentLane * 700.0f;
+            racer->aiLaneTimer = 2.0f + (float)(rand() % 300) / 100.0f;
+        }
+        racer->pos.x += (racer->targetX - racer->pos.x) * fminf(1.0f, dt * 8.0f);
     }
 
     float maxSpd = MAX_SPEED * racer->car.stats.speed;
@@ -341,16 +349,9 @@ static void update_racer(Racer *racer, float dt, InputState input, const Stage *
     }
 
     racer->pos.z += racer->speed * dt;
-    racer->pos.x += racer->steer * racer->speed * dt * 0.8f + racer->driftAngle * racer->speed * dt * 0.3f;
+    // Lane-switch handles pos.x update — no analog steering position needed
 
     float roadHalfWidth = ROAD_WIDTH * 0.4f;
-    float boundary = roadHalfWidth - 100.0f;
-    if (fabsf(racer->pos.x) > boundary) {
-        float overshoot = fabsf(racer->pos.x) - boundary;
-        float pushForce = overshoot * 0.5f;
-        racer->pos.x -= copysignf(pushForce * dt * 15.0f, racer->pos.x);
-        racer->speed *= 0.96f;
-    }
     if (fabsf(racer->pos.x) > roadHalfWidth) {
         racer->pos.x = copysignf(roadHalfWidth, racer->pos.x);
         racer->speed *= 0.90f;
