@@ -168,8 +168,8 @@ int main(void) {
                     race_update(&race, FIXED_DT, input.state);
                     render_update(&render, FIXED_DT, &race.stage);
                     if (input.state.pause && !prevBack) {
-                        game_set_state(&game, MAIN_MENU);
-                        audio_stop(&audio);
+                        game_set_state(&game, PAUSED);
+                        menu.selectedItem = 0;
                         prevBack = true;
                     }
                     if (race.finished) {
@@ -185,6 +185,39 @@ int main(void) {
                         snprintf(entry.date, sizeof(entry.date), "2026-06-15");
                         highscore_add(&scores, &entry);
                         highscore_save(&scores, HIGHSCORE_PATH);
+                    }
+                    break;
+
+                case PAUSED:
+                    if (input.state.steer < -0.5f && !prevBack) {
+                        menu.selectedItem = (menu.selectedItem - 1 + 4) % 4;
+                        prevBack = true;
+                    }
+                    if (throttlePressed) {
+                        menu.selectedItem = (menu.selectedItem + 1) % 4;
+                    }
+                    if (confirmPressed) {
+                        switch (menu.selectedItem) {
+                            case 0: game_set_state(&game, RACING); break;
+                            case 1:
+                                race_init(&race, selectedStage, selectedCar);
+                                race.racers[0].car.color = carColor;
+                                audio_play(&audio, selectedStage);
+                                game_set_state(&game, COUNTDOWN);
+                                break;
+                            case 2:
+                                game_set_state(&game, SETTINGS);
+                                menu.selectedItem = 0;
+                                break;
+                            case 3:
+                                game_set_state(&game, MAIN_MENU);
+                                menu.selectedItem = 0;
+                                audio_stop(&audio);
+                                break;
+                        }
+                    }
+                    if (backPressed) {
+                        game_set_state(&game, RACING);
                     }
                     break;
 
@@ -258,6 +291,9 @@ int main(void) {
                 DrawText("Neon Coast", 450, 350, 24, WHITE);
                 break;
             case ATTRACT_MODE:
+                render_draw_sky(&render);
+                render_draw_road(&render, &race.stage, game.stateTime * 200.0f);
+                render_draw_clouds(&render, game.stateTime * 200.0f);
                 ui_draw_attract_mode(game.stateTime, input_get_active(&input));
                 break;
             case MAIN_MENU:
@@ -279,13 +315,39 @@ int main(void) {
                 break;
             case RACING:
                 render_draw_sky(&render);
+                render_draw_clouds(&render, race.racers[0].pos.z);
                 render_draw_road(&render, &race.stage, race.racers[0].pos.z);
+                render_draw_scenery(race.scenery, race.sceneryCount, &race.stage, race.racers[0].pos.z);
+                for (int t = 0; t < race.trafficCount; t++) {
+                    TrafficCar *tc = &race.traffic[t];
+                    if (!tc->active) continue;
+                    render_draw_traffic(&race.stage, tc->pos.x, tc->pos.z, tc->color,
+                        race.racers[0].pos.z, tc->speed);
+                }
                 for (int r = 1; r < MAX_RACERS; r++) {
                     render_draw_opponent(&race.stage, race.racers[r].pos.x,
                         race.racers[r].pos.z, race.racers[r].car.color, race.racers[0].pos.z);
                 }
                 render_draw_car(input.state.steer, race.racers[0].car.color, race.racers[0].speed);
                 ui_draw_hud(&race, input_get_active(&input));
+                break;
+            case PAUSED:
+                render_draw_sky(&render);
+                render_draw_clouds(&render, race.racers[0].pos.z);
+                render_draw_road(&render, &race.stage, race.racers[0].pos.z);
+                render_draw_scenery(race.scenery, race.sceneryCount, &race.stage, race.racers[0].pos.z);
+                for (int t = 0; t < race.trafficCount; t++) {
+                    TrafficCar *tc = &race.traffic[t];
+                    if (!tc->active) continue;
+                    render_draw_traffic(&race.stage, tc->pos.x, tc->pos.z, tc->color,
+                        race.racers[0].pos.z, tc->speed);
+                }
+                for (int r = 1; r < MAX_RACERS; r++) {
+                    render_draw_opponent(&race.stage, race.racers[r].pos.x,
+                        race.racers[r].pos.z, race.racers[r].car.color, race.racers[0].pos.z);
+                }
+                render_draw_car(input.state.steer, race.racers[0].car.color, race.racers[0].speed);
+                ui_draw_pause_menu(&menu, input_get_active(&input));
                 break;
             case FINISH_SCREEN:
                 ui_draw_finish_screen(&race, &menu, input_get_active(&input));
