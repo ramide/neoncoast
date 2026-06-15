@@ -50,19 +50,21 @@ int main(void) {
     FILE *f = fopen("neoncoast.ico", "wb");
     if (!f) { perror("fopen"); return 1; }
 
-    int pixelSize = 32 * 32 * 4;
     int bmpHeaderSize = 40;
-    int pixelOffset = 6 + 16 + bmpHeaderSize;
+    int xorSize = 32 * 32 * 4;
+    int andMaskSize = (32 * 32) / 8;
+    int totalDataSize = bmpHeaderSize + xorSize + andMaskSize;
+    int pixelOffset = 6 + 16;
 
     unsigned char iconDir[] = { 0, 0, 1, 0, 1, 0 };
     fwrite(iconDir, 1, 6, f);
 
     unsigned char dirEntry[] = {
         32, 32, 0, 0, 1, 0, 32, 0,
-        (unsigned char)(pixelSize & 0xFF),
-        (unsigned char)((pixelSize >> 8) & 0xFF),
-        (unsigned char)((pixelSize >> 16) & 0xFF),
-        (unsigned char)((pixelSize >> 24) & 0xFF),
+        (unsigned char)(totalDataSize & 0xFF),
+        (unsigned char)((totalDataSize >> 8) & 0xFF),
+        (unsigned char)((totalDataSize >> 16) & 0xFF),
+        (unsigned char)((totalDataSize >> 24) & 0xFF),
         (unsigned char)(pixelOffset & 0xFF),
         (unsigned char)((pixelOffset >> 8) & 0xFF),
         (unsigned char)((pixelOffset >> 16) & 0xFF),
@@ -89,7 +91,10 @@ int main(void) {
         for (int x = 0; x < 32; x++)
             fwrite(&pixel[y][x][0], 1, 4, f);
 
+    for (int i = 0; i < andMaskSize; i++)
+        fputc(0, f);
+
     fclose(f);
-    printf("Generated neoncoast.ico (%d bytes)\n", pixelOffset + pixelSize);
+    printf("Generated neoncoast.ico (%d bytes)\n", pixelOffset + totalDataSize);
     return 0;
 }
