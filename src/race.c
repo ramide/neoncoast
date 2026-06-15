@@ -79,6 +79,20 @@ void race_generate_scenery(Race *race) {
         (Color){ 140, 110, 90, 255 }, (Color){ 180, 150, 120, 255 },
         (Color){ 90, 110, 130, 255 }, (Color){ 200, 60, 60, 255 }
     };
+    Color templeColors[] = {
+        (Color){ 200, 160, 80, 255 }, (Color){ 180, 120, 50, 255 },
+        (Color){ 220, 180, 100, 255 }
+    };
+    Color cactusGreen = (Color){ 40, 140, 40, 255 };
+    Color rockGray = (Color){ 140, 130, 120, 255 };
+    Color billboardColors[] = {
+        (Color){ 255, 50, 50, 255 }, (Color){ 50, 255, 100, 255 },
+        (Color){ 50, 100, 255, 255 }, (Color){ 255, 255, 50, 255 }
+    };
+    Color deerBrown = (Color){ 160, 100, 60, 255 };
+    Color birdColor = (Color){ 100, 100, 100, 255 };
+
+    StageType stageType = race->stage.type;
 
     for (int i = 0; i < MAX_SCENERY && race->sceneryCount < MAX_SCENERY; i++) {
         SceneryObject *s = &race->scenery[race->sceneryCount];
@@ -86,21 +100,142 @@ void race_generate_scenery(Race *race) {
         s->rightSide = (rand() % 2 == 0);
         float roadEdgeOffset = 2000.0f + (rand() % 2000);
 
-        if (rand() % 3 == 0) {
-            s->type = SCENERY_BUILDING;
-            s->worldX = s->rightSide ? roadEdgeOffset : -roadEdgeOffset;
-            s->scale = 0.5f + (rand() % 3) * 0.3f;
-            s->color = buildingColors[rand() % 4];
-        } else if (rand() % 2 == 0) {
-            s->type = SCENERY_PALM;
-            s->worldX = s->rightSide ? roadEdgeOffset + 100 : -(roadEdgeOffset + 100);
-            s->scale = 0.8f + (rand() % 4) * 0.2f;
-            s->color = treeGreen;
+        int roll = rand() % 100;
+
+        if (stageType == STAGE_SAHARA) {
+            if (roll < 40) {
+                s->type = SCENERY_CACTUS;
+                s->worldX = s->rightSide ? roadEdgeOffset + 50 : -(roadEdgeOffset + 50);
+                s->scale = 0.6f + (rand() % 4) * 0.2f;
+                s->color = cactusGreen;
+            } else if (roll < 65) {
+                s->type = SCENERY_ROCK;
+                s->worldX = s->rightSide ? roadEdgeOffset : -roadEdgeOffset;
+                s->scale = 0.5f + (rand() % 3) * 0.2f;
+                s->color = rockGray;
+            } else if (roll < 80) {
+                s->type = SCENERY_TREE;
+                s->worldX = s->rightSide ? roadEdgeOffset : -roadEdgeOffset;
+                s->scale = 0.6f + (rand() % 3) * 0.2f;
+                s->color = (rand() % 2) ? treeGreen : treeDark;
+            } else if (roll < 90) {
+                s->type = SCENERY_SIGN;
+                s->worldX = s->rightSide ? roadEdgeOffset : -roadEdgeOffset;
+                s->scale = 0.8f + (rand() % 3) * 0.2f;
+                s->color = (Color){ 50, 50, 180, 255 };
+            } else {
+                s->type = SCENERY_BILLBOARD;
+                s->worldX = s->rightSide ? roadEdgeOffset + 100 : -(roadEdgeOffset + 100);
+                s->scale = 0.7f + (rand() % 3) * 0.2f;
+                s->color = billboardColors[rand() % 4];
+            }
+        } else if (stageType == STAGE_INDIA) {
+            if (roll < 30) {
+                s->type = SCENERY_TEMPLE;
+                s->worldX = s->rightSide ? roadEdgeOffset : -roadEdgeOffset;
+                s->scale = 0.5f + (rand() % 3) * 0.2f;
+                s->color = templeColors[rand() % 3];
+            } else if (roll < 50) {
+                s->type = SCENERY_TREE;
+                s->worldX = s->rightSide ? roadEdgeOffset : -roadEdgeOffset;
+                s->scale = 0.6f + (rand() % 4) * 0.2f;
+                s->color = (rand() % 2) ? treeGreen : treeDark;
+            } else if (roll < 65) {
+                s->type = SCENERY_DEER;
+                s->worldX = s->rightSide ? roadEdgeOffset + 50 : -(roadEdgeOffset + 50);
+                s->scale = 0.5f + (rand() % 2) * 0.2f;
+                s->color = deerBrown;
+            } else if (roll < 80) {
+                s->type = SCENERY_BUILDING;
+                s->worldX = s->rightSide ? roadEdgeOffset : -roadEdgeOffset;
+                s->scale = 0.5f + (rand() % 3) * 0.3f;
+                s->color = buildingColors[rand() % 4];
+            } else if (roll < 90) {
+                s->type = SCENERY_BIRD;
+                s->worldX = s->rightSide ? roadEdgeOffset : -roadEdgeOffset;
+                s->scale = 0.6f + (rand() % 2) * 0.2f;
+                s->color = birdColor;
+            } else {
+                s->type = SCENERY_SIGN;
+                s->worldX = s->rightSide ? roadEdgeOffset : -roadEdgeOffset;
+                s->scale = 0.8f + (rand() % 3) * 0.2f;
+                s->color = (Color){ 50, 50, 180, 255 };
+            }
+        } else if (stageType == STAGE_TOKYO || stageType == STAGE_NYC) {
+            if (roll < 40) {
+                s->type = SCENERY_BUILDING;
+                s->worldX = s->rightSide ? roadEdgeOffset : -roadEdgeOffset;
+                s->scale = 0.5f + (rand() % 3) * 0.3f;
+                s->color = buildingColors[rand() % 4];
+            } else if (roll < 60) {
+                s->type = SCENERY_BILLBOARD;
+                s->worldX = s->rightSide ? roadEdgeOffset + 50 : -(roadEdgeOffset + 50);
+                s->scale = 0.7f + (rand() % 3) * 0.2f;
+                s->color = billboardColors[rand() % 4];
+            } else if (roll < 75) {
+                s->type = SCENERY_TREE;
+                s->worldX = s->rightSide ? roadEdgeOffset : -roadEdgeOffset;
+                s->scale = 0.6f + (rand() % 3) * 0.2f;
+                s->color = (rand() % 2) ? treeGreen : treeDark;
+            } else if (roll < 85) {
+                s->type = SCENERY_SIGN;
+                s->worldX = s->rightSide ? roadEdgeOffset : -roadEdgeOffset;
+                s->scale = 0.8f + (rand() % 3) * 0.2f;
+                s->color = (Color){ 50, 50, 180, 255 };
+            } else if (roll < 93) {
+                s->type = SCENERY_ROCK;
+                s->worldX = s->rightSide ? roadEdgeOffset : -roadEdgeOffset;
+                s->scale = 0.5f + (rand() % 2) * 0.2f;
+                s->color = rockGray;
+            } else {
+                s->type = SCENERY_BIRD;
+                s->worldX = s->rightSide ? roadEdgeOffset : -roadEdgeOffset;
+                s->scale = 0.6f + (rand() % 2) * 0.2f;
+                s->color = birdColor;
+            }
         } else {
-            s->type = SCENERY_TREE;
-            s->worldX = s->rightSide ? roadEdgeOffset : -roadEdgeOffset;
-            s->scale = 0.6f + (rand() % 4) * 0.2f;
-            s->color = (rand() % 2) ? treeGreen : treeDark;
+            // Default (Coastal, Mediterranean, Hawaii, Guatemala): more palms, natural mix
+            if (roll < 25) {
+                s->type = SCENERY_PALM;
+                s->worldX = s->rightSide ? roadEdgeOffset + 100 : -(roadEdgeOffset + 100);
+                s->scale = 0.8f + (rand() % 4) * 0.2f;
+                s->color = treeGreen;
+            } else if (roll < 45) {
+                s->type = SCENERY_TREE;
+                s->worldX = s->rightSide ? roadEdgeOffset : -roadEdgeOffset;
+                s->scale = 0.6f + (rand() % 4) * 0.2f;
+                s->color = (rand() % 2) ? treeGreen : treeDark;
+            } else if (roll < 60) {
+                s->type = SCENERY_BUILDING;
+                s->worldX = s->rightSide ? roadEdgeOffset : -roadEdgeOffset;
+                s->scale = 0.5f + (rand() % 3) * 0.3f;
+                s->color = buildingColors[rand() % 4];
+            } else if (roll < 70) {
+                s->type = SCENERY_SIGN;
+                s->worldX = s->rightSide ? roadEdgeOffset : -roadEdgeOffset;
+                s->scale = 0.8f + (rand() % 3) * 0.2f;
+                s->color = (Color){ 50, 50, 180, 255 };
+            } else if (roll < 78) {
+                s->type = SCENERY_ROCK;
+                s->worldX = s->rightSide ? roadEdgeOffset : -roadEdgeOffset;
+                s->scale = 0.5f + (rand() % 3) * 0.2f;
+                s->color = rockGray;
+            } else if (roll < 86) {
+                s->type = SCENERY_DEER;
+                s->worldX = s->rightSide ? roadEdgeOffset + 50 : -(roadEdgeOffset + 50);
+                s->scale = 0.5f + (rand() % 2) * 0.2f;
+                s->color = deerBrown;
+            } else if (roll < 93) {
+                s->type = SCENERY_BIRD;
+                s->worldX = s->rightSide ? roadEdgeOffset : -roadEdgeOffset;
+                s->scale = 0.6f + (rand() % 2) * 0.2f;
+                s->color = birdColor;
+            } else {
+                s->type = SCENERY_TEMPLE;
+                s->worldX = s->rightSide ? roadEdgeOffset : -roadEdgeOffset;
+                s->scale = 0.5f + (rand() % 2) * 0.2f;
+                s->color = templeColors[rand() % 3];
+            }
         }
         race->sceneryCount++;
     }

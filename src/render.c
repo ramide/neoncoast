@@ -296,6 +296,81 @@ void render_draw_scenery(SceneryObject *scenery, int count, const Stage *stage, 
                               (int)signW, (int)signH, (Color){ 50, 50, 180, 255 });
                 break;
             }
+            case SCENERY_TEMPLE: {
+                float baseW = 50.0f * s->scale * scale;
+                float baseH = 60.0f * s->scale * scale;
+                float roofH = 30.0f * s->scale * scale;
+                if (baseW < 4) continue;
+                DrawRectangle((int)(screenX - baseW / 2), (int)(screenY - baseH),
+                              (int)baseW, (int)baseH, s->color);
+                DrawTriangle(
+                    (Vector2){ screenX - baseW * 0.6f, screenY - baseH },
+                    (Vector2){ screenX + baseW * 0.6f, screenY - baseH },
+                    (Vector2){ screenX, screenY - baseH - roofH },
+                    ColorBrightness(s->color, 30));
+                break;
+            }
+            case SCENERY_CACTUS: {
+                float trunkW = 12.0f * s->scale * scale;
+                float trunkH = 70.0f * s->scale * scale;
+                if (trunkW < 3) continue;
+                DrawRectangle((int)(screenX - trunkW / 2), (int)(screenY - trunkH),
+                              (int)trunkW, (int)trunkH, s->color);
+                DrawRectangle((int)(screenX - trunkW * 2), (int)(screenY - trunkH * 0.7f),
+                              (int)(trunkW * 1.5f), (int)(trunkW * 0.6f), s->color);
+                DrawRectangle((int)(screenX + trunkW * 0.5f), (int)(screenY - trunkH * 0.5f),
+                              (int)(trunkW * 1.5f), (int)(trunkW * 0.6f), s->color);
+                break;
+            }
+            case SCENERY_ROCK: {
+                float rockW = 25.0f * s->scale * scale;
+                float rockH = 15.0f * s->scale * scale;
+                if (rockW < 3) continue;
+                DrawEllipse((int)screenX, (int)(screenY - rockH / 2),
+                            (int)(rockW / 2), (int)(rockH / 2), s->color);
+                break;
+            }
+            case SCENERY_BILLBOARD: {
+                float poleW = 4.0f * s->scale * scale;
+                float poleH = 60.0f * s->scale * scale;
+                float boardW = 50.0f * s->scale * scale;
+                float boardH = 30.0f * s->scale * scale;
+                if (boardW < 4) continue;
+                DrawRectangle((int)(screenX - poleW / 2), (int)(screenY - poleH),
+                              (int)poleW, (int)poleH, (Color){ 150, 150, 150, 255 });
+                DrawRectangle((int)(screenX - boardW / 2), (int)(screenY - poleH - boardH),
+                              (int)boardW, (int)boardH, s->color);
+                break;
+            }
+            case SCENERY_DEER: {
+                float bodyW = 20.0f * s->scale * scale;
+                float bodyH = 12.0f * s->scale * scale;
+                float legH = 15.0f * s->scale * scale;
+                float legW = 3.0f * s->scale * scale;
+                float neckH = 12.0f * s->scale * scale;
+                if (bodyW < 3) continue;
+                DrawRectangle((int)(screenX - bodyW / 2), (int)(screenY - bodyH - legH),
+                              (int)bodyW, (int)bodyH, s->color);
+                DrawRectangle((int)(screenX - bodyW * 0.3f), (int)(screenY - legH),
+                              (int)legW, (int)legH, (Color){ 80, 50, 30, 255 });
+                DrawRectangle((int)(screenX + bodyW * 0.2f), (int)(screenY - legH),
+                              (int)legW, (int)legH, (Color){ 80, 50, 30, 255 });
+                DrawRectangle((int)(screenX + bodyW * 0.3f), (int)(screenY - bodyH - legH - neckH),
+                              (int)legW * 2, (int)neckH, s->color);
+                DrawCircle((int)(screenX + bodyW * 0.4f), (int)(screenY - bodyH - legH - neckH - 4.0f * scale),
+                           4.0f * scale, (Color){ 80, 50, 30, 255 });
+                break;
+            }
+            case SCENERY_BIRD: {
+                float wingSpan = 25.0f * s->scale * scale;
+                if (wingSpan < 4) continue;
+                float birdY = screenY - 80.0f * scale;
+                DrawLine((int)screenX, (int)birdY,
+                         (int)(screenX - wingSpan / 2), (int)(birdY - 8.0f * scale), s->color);
+                DrawLine((int)screenX, (int)birdY,
+                         (int)(screenX + wingSpan / 2), (int)(birdY - 8.0f * scale), s->color);
+                break;
+            }
         }
     }
 }
