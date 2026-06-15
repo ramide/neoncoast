@@ -25,6 +25,9 @@ typedef struct {
     float gearRPM;
     float gearShiftTime;
     bool autoshift;
+    bool isDrifting;
+    float driftAngle;
+    float driftScore;
 } Racer;
 
 typedef struct {

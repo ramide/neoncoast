@@ -121,6 +121,22 @@ static void update_racer(Racer *racer, float dt, InputState input, const Stage *
         racer->smoothedSteer += (input.steer - racer->smoothedSteer) * fminf(1.0f, dt * 8.0f);
         racer->steer += racer->smoothedSteer * STEER_SPEED * dt;
         racer->steer *= powf(0.90f, dt * 60);
+
+        float speedRatio = racer->speed / (MAX_SPEED * racer->car.stats.speed);
+        if (input.handbrake && speedRatio > 0.3f && fabsf(racer->steer) > 0.1f) {
+            racer->isDrifting = true;
+            racer->driftAngle += racer->steer * dt * 2.0f;
+            racer->driftAngle = fmaxf(-0.5f, fminf(0.5f, racer->driftAngle));
+            racer->driftScore += fabsf(racer->steer) * racer->speed * dt * 0.01f;
+        } else {
+            if (racer->isDrifting) {
+                racer->driftAngle *= 0.9f;
+                if (fabsf(racer->driftAngle) < 0.01f) {
+                    racer->isDrifting = false;
+                    racer->driftAngle = 0;
+                }
+            }
+        }
     } else {
         racer->speed = MAX_SPEED * racer->aiSpeedMult * racer->car.stats.speed;
 
@@ -154,7 +170,7 @@ static void update_racer(Racer *racer, float dt, InputState input, const Stage *
     }
 
     racer->pos.z += racer->speed * dt;
-    racer->pos.x += racer->steer * racer->speed * dt * 0.5f;
+    racer->pos.x += racer->steer * racer->speed * dt * 0.5f + racer->driftAngle * racer->speed * dt * 0.3f;
 
     float roadHalfWidth = ROAD_WIDTH * 0.4f;
     if (fabsf(racer->pos.x) > roadHalfWidth) {
