@@ -7,7 +7,7 @@
 #include "input.h"
 
 #define MAX_TRAFFIC 15
-#define MAX_SCENERY 60
+#define MAX_SCENERY 80
 
 typedef struct {
     Vector3 pos;
@@ -53,7 +53,9 @@ typedef enum {
     SCENERY_ROCK,
     SCENERY_BILLBOARD,
     SCENERY_DEER,
-    SCENERY_BIRD
+    SCENERY_BIRD,
+    SCENERY_HOUSE,
+    SCENERY_LAMP
 } SceneryType;
 
 typedef struct {

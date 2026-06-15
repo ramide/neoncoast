@@ -344,7 +344,7 @@ void render_draw_traffic(const Stage *stage, float worldX, float worldZ, Color c
     DrawCircle((int)(screenX + carW * 0.25f), (int)(screenY + carH * 0.42f), carW * 0.05f, RED);
 }
 
-void render_draw_scenery(SceneryObject *scenery, int count, const Stage *stage, float playerZ) {
+void render_draw_scenery(const Render *render, SceneryObject *scenery, int count, const Stage *stage, float playerZ) {
     for (int i = 0; i < count; i++) {
         SceneryObject *s = &scenery[i];
         float relativeZ = s->worldZ - playerZ;
@@ -489,6 +489,58 @@ void render_draw_scenery(SceneryObject *scenery, int count, const Stage *stage, 
                          (int)(screenX - wingSpan / 2), (int)(birdY - 8.0f * scale), s->color);
                 DrawLine((int)screenX, (int)birdY,
                          (int)(screenX + wingSpan / 2), (int)(birdY - 8.0f * scale), s->color);
+                break;
+            }
+            case SCENERY_HOUSE: {
+                float houseW = 40.0f * s->scale * scale;
+                float houseH = 30.0f * s->scale * scale;
+                float roofOverhang = 6.0f * s->scale * scale;
+                if (houseW < 4) continue;
+                DrawRectangle((int)(screenX - houseW / 2), (int)(screenY - houseH),
+                              (int)houseW, (int)houseH, s->color);
+                DrawTriangle(
+                    (Vector2){ screenX - houseW / 2 - roofOverhang, screenY - houseH },
+                    (Vector2){ screenX + houseW / 2 + roofOverhang, screenY - houseH },
+                    (Vector2){ screenX, screenY - houseH - 15.0f * s->scale * scale },
+                    ColorBrightness(s->color, -20));
+                float winW = 8.0f * s->scale * scale;
+                float winH = 8.0f * s->scale * scale;
+                if (winW > 2) {
+                    Color winColor;
+                    if (render->timeOfDay < 0.25f || render->timeOfDay > 0.75f) {
+                        winColor = (Color){ 255, 220, 100, 200 };
+                    } else {
+                        winColor = (Color){ 100, 120, 140, 150 };
+                    }
+                    DrawRectangle((int)(screenX - houseW / 4 - winW / 2), (int)(screenY - houseH + 6.0f * scale),
+                                  (int)winW, (int)winH, winColor);
+                    DrawRectangle((int)(screenX + houseW / 4 - winW / 2), (int)(screenY - houseH + 6.0f * scale),
+                                  (int)winW, (int)winH, winColor);
+                }
+                float doorW = 8.0f * s->scale * scale;
+                float doorH = 14.0f * s->scale * scale;
+                if (doorW > 2) {
+                    DrawRectangle((int)(screenX - doorW / 2), (int)(screenY - doorH),
+                                  (int)doorW, (int)doorH, ColorBrightness(s->color, -30));
+                }
+                break;
+            }
+            case SCENERY_LAMP: {
+                float poleW = 3.0f * s->scale * scale;
+                float poleH = 50.0f * s->scale * scale;
+                float lightR = 8.0f * s->scale * scale;
+                if (poleW < 2) continue;
+                DrawRectangle((int)(screenX - poleW / 2), (int)(screenY - poleH),
+                              (int)poleW, (int)poleH, (Color){ 80, 80, 80, 255 });
+                Color lightColor;
+                if (render->timeOfDay < 0.25f || render->timeOfDay > 0.75f) {
+                    lightColor = (Color){ 255, 220, 100, 180 };
+                } else {
+                    lightColor = (Color){ 255, 220, 100, 40 };
+                }
+                DrawCircle((int)screenX, (int)(screenY - poleH - lightR), lightR, lightColor);
+                DrawCircle((int)screenX, (int)(screenY - poleH - lightR), lightR * 0.4f,
+                           (Color){ 255, 255, 200, 220 });
                 break;
             }
         }

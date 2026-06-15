@@ -239,6 +239,39 @@ void race_generate_scenery(Race *race) {
         }
         race->sceneryCount++;
     }
+
+    // Second pass: close scenery near road (houses, lamps) - visible at close range
+    StageType stageType = race->stage.type;
+    for (int i = 0; i < MAX_SCENERY && race->sceneryCount < MAX_SCENERY; i++) {
+        SceneryObject *s = &race->scenery[race->sceneryCount];
+        s->worldZ = (float)(rand() % TOTAL_SEGMENTS) * SEGMENT_LENGTH;
+        s->rightSide = (rand() % 2 == 0);
+        float closeOffset = 300.0f + (rand() % 500);
+        s->worldX = s->rightSide ? closeOffset : -closeOffset;
+        s->scale = 0.4f + (rand() % 3) * 0.15f;
+        if (rand() % 4 == 0) {
+            s->type = SCENERY_LAMP;
+            s->color = (Color){ 200, 200, 150, 255 };
+        } else {
+            s->type = SCENERY_HOUSE;
+            switch (stageType) {
+                case STAGE_TOKYO:
+                case STAGE_NYC:
+                    s->color = (Color){ 60 + rand()%100, 60 + rand()%100, 80 + rand()%80, 255 };
+                    break;
+                case STAGE_SAHARA:
+                    s->color = (Color){ 160 + rand()%40, 140 + rand()%40, 100 + rand()%30, 255 };
+                    break;
+                case STAGE_INDIA:
+                    s->color = (Color){ 180 + rand()%60, 100 + rand()%40, 80 + rand()%40, 255 };
+                    break;
+                default:
+                    s->color = (Color){ 130 + rand()%50, 120 + rand()%40, 100 + rand()%30, 255 };
+                    break;
+            }
+        }
+        race->sceneryCount++;
+    }
 }
 
 static void update_racer(Racer *racer, float dt, InputState input, const Stage *stage) {
