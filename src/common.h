@@ -14,8 +14,12 @@
 #define MAX_CARS 5
 #define MAX_HIGHSCORES 10
 
+#ifndef DEG2RAD
 #define DEG2RAD (PI / 180.0f)
+#endif
+#ifndef RAD2DEG
 #define RAD2DEG (180.0f / PI)
+#endif
 
 #define COLOR_SKY_DAWN (Color){ 255, 183, 130, 255 }
 #define COLOR_SKY_DAY (Color){ 135, 206, 235, 255 }
