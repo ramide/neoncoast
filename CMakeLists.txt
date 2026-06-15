@@ -9,6 +9,8 @@ add_subdirectory(third_party/raylib)
 file(GLOB GAME_SOURCES src/*.c)
 add_executable(neoncoast ${GAME_SOURCES})
 target_link_libraries(neoncoast raylib)
+# Copy assets to build directory
+file(COPY ${CMAKE_SOURCE_DIR}/assets DESTINATION ${CMAKE_BINARY_DIR})
 target_include_directories(neoncoast PRIVATE src)
 
 if(WIN32)
