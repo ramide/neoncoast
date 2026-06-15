@@ -248,8 +248,7 @@ void render_draw_road(const Render *render, const Stage *stage, float playerZ) {
         cumHill[n] = totalHill;
     }
 
-    // Sub-division factor for smooth curves (4 sub-trapezoids per segment)
-    #define SUBDIV 4
+    #define SUBDIV 8
 
     for (int n = DRAW_DISTANCE - 1; n >= 0; n--) {
         float segHill = cumHill[n];
@@ -261,7 +260,10 @@ void render_draw_road(const Render *render, const Stage *stage, float playerZ) {
 
             float z0 = (n + t0) * SEGMENT_LENGTH - playerOffset;
             float z1 = (n + t1) * SEGMENT_LENGTH - playerOffset;
-            if (z0 <= 0 || z1 <= 0) continue;
+
+            // Fix: clamp z0 to minimum 1 instead of skipping (prevents gap at screen bottom)
+            if (z1 <= 0) continue;
+            if (z0 <= 0) z0 = 1.0f;
 
             float scale0 = FOCAL_LENGTH / z0;
             float scale1 = FOCAL_LENGTH / z1;
@@ -271,7 +273,7 @@ void render_draw_road(const Render *render, const Stage *stage, float playerZ) {
 
             float bottomY = HORIZON_Y + CAMERA_HEIGHT * scale0 - hillOffset0;
             float topY = HORIZON_Y + CAMERA_HEIGHT * scale1 - hillOffset1;
-            if (bottomY >= SCREEN_HEIGHT || topY >= SCREEN_HEIGHT) continue;
+            if (bottomY >= SCREEN_HEIGHT) continue;
 
             float cumCurve0 = dx[n] + (dx[n+1] - dx[n]) * t0;
             float cumCurve1 = dx[n] + (dx[n+1] - dx[n]) * t1;
@@ -282,9 +284,16 @@ void render_draw_road(const Render *render, const Stage *stage, float playerZ) {
             float w0 = ROAD_WIDTH * 0.5f * scale0;
             float w1 = ROAD_WIDTH * 0.5f * scale1;
 
-            float lx = fminf(fminf(x0 - w0, x0 + w0), fminf(x1 - w1, x1 + w1));
-            float rx = fmaxf(fmaxf(x0 - w0, x0 + w0), fmaxf(x1 - w1, x1 + w1));
-            if (rx < 0 || lx > SCREEN_WIDTH) continue;
+            // Compute average position and width for a solid rectangle
+            float avgX = (x0 + x1) * 0.5f;
+            float avgW = (w0 + w1) * 0.5f;
+            float rectH = bottomY - topY + 1.0f;
+            if (rectH < 1.0f) rectH = 1.0f;
+
+            int rx = (int)(avgX - avgW);
+            int ry = (int)topY;
+            int rw = (int)(avgW * 2.0f + 1.0f);
+            int rh = (int)(bottomY - topY + 1.0f);
 
             // Road surface color
             Color roadColor;
@@ -295,45 +304,23 @@ void render_draw_road(const Render *render, const Stage *stage, float playerZ) {
             } else {
                 roadColor = (Color){ 140, 140, 150, 255 };
             }
+            DrawRectangle(rx, ry, rw, rh, roadColor);
 
-            // Draw road trapezoid (two triangles)
-            DrawTriangle(
-                (Vector2){ x0 - w0, bottomY }, (Vector2){ x0 + w0, bottomY },
-                (Vector2){ x1 - w1, topY }, roadColor);
-            DrawTriangle(
-                (Vector2){ x0 + w0, bottomY }, (Vector2){ x1 - w1, topY },
-                (Vector2){ x1 + w1, topY }, roadColor);
+            // Rumble strips (road edges) - thin rectangles on left and right
+            int rumbleW = (int)(avgW * 0.06f + 1.0f);
+            if (rumbleW > 0) {
+                Color rumbleColor = ((n + s) % 2 == 0) ? (Color){ 255, 255, 255, 200 } : (Color){ 200, 20, 20, 200 };
+                DrawRectangle(rx, ry, rumbleW, rh, rumbleColor);
+                DrawRectangle(rx + rw - rumbleW, ry, rumbleW, rh, rumbleColor);
+            }
 
-            // Rumble strips (road edges) - alternating red/white
-            Color rumbleColor = ((n + s) % 2 == 0) ? (Color){ 255, 255, 255, 200 } : (Color){ 200, 20, 20, 200 };
-
-            // Left rumble strip
-            DrawTriangle(
-                (Vector2){ x0 - w0, bottomY }, (Vector2){ x0 - w0 + w0*0.06f, bottomY },
-                (Vector2){ x1 - w1, topY }, rumbleColor);
-            DrawTriangle(
-                (Vector2){ x0 - w0 + w0*0.06f, bottomY }, (Vector2){ x1 - w1, topY },
-                (Vector2){ x1 - w1 + w1*0.06f, topY }, rumbleColor);
-
-            // Right rumble strip
-            DrawTriangle(
-                (Vector2){ x0 + w0 - w0*0.06f, bottomY }, (Vector2){ x0 + w0, bottomY },
-                (Vector2){ x1 + w1 - w1*0.06f, topY }, rumbleColor);
-            DrawTriangle(
-                (Vector2){ x0 + w0, bottomY }, (Vector2){ x1 + w1 - w1*0.06f, topY },
-                (Vector2){ x1 + w1, topY }, rumbleColor);
-
-            // Center lane markings (dashed) - every 8 sub-segments
-            if ((n + s) % 8 < 4) {
-                float lw0 = w0 * 0.02f;
-                float lw1 = w1 * 0.02f;
-                Color markColor = (Color){ 255, 255, 255, 150 };
-                DrawTriangle(
-                    (Vector2){ x0 - lw0, bottomY }, (Vector2){ x0 + lw0, bottomY },
-                    (Vector2){ x1 - lw1, topY }, markColor);
-                DrawTriangle(
-                    (Vector2){ x0 + lw0, bottomY }, (Vector2){ x1 - lw1, topY },
-                    (Vector2){ x1 + lw1, topY }, markColor);
+            // Center lane markings (dashed)
+            if ((n + s) % 16 < 8) {
+                int laneW = (int)(avgW * 0.02f + 1.0f);
+                if (laneW > 0) {
+                    Color markColor = (Color){ 255, 255, 255, 150 };
+                    DrawRectangle(rx + rw / 2 - laneW / 2, ry, laneW, rh, markColor);
+                }
             }
         }
     }
