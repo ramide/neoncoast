@@ -7,7 +7,7 @@
 #include "input.h"
 
 #define MAX_TRAFFIC 15
-#define MAX_SCENERY 80
+#define MAX_SCENERY 200
 
 typedef struct {
     Vector3 pos;

@@ -95,7 +95,11 @@ void race_generate_scenery(Race *race) {
 
     for (int i = 0; i < MAX_SCENERY && race->sceneryCount < MAX_SCENERY; i++) {
         SceneryObject *s = &race->scenery[race->sceneryCount];
-        s->worldZ = (float)(rand() % TOTAL_SEGMENTS) * SEGMENT_LENGTH;
+        if (i < 80) {
+            s->worldZ = (float)(rand() % 5000);
+        } else {
+            s->worldZ = (float)(rand() % TOTAL_SEGMENTS) * SEGMENT_LENGTH;
+        }
         s->rightSide = (rand() % 2 == 0);
         float roadEdgeOffset = 2000.0f + (rand() % 2000);
 
