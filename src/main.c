@@ -288,7 +288,11 @@ int main(void) {
 
         switch (game.current) {
             case BOOT:
-                DrawText("Neon Coast", 450, 350, 24, WHITE);
+                render_draw_sky(&render);
+                render_draw_road(&render, &race.stage, game.stateTime * 200.0f);
+                render_draw_clouds(&render, game.stateTime * 200.0f);
+                DrawText("Neon Coast", 350, 150, 48, YELLOW);
+                DrawText("Press ENTER to start", 420, 500, 24, WHITE);
                 break;
             case ATTRACT_MODE:
                 render_draw_sky(&render);

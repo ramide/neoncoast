@@ -15,6 +15,8 @@ void render_init(Render *render) {
         .projection = CAMERA_PERSPECTIVE
     };
     render->timeOfDay = 0.3f;
+    render->skyColor = render_get_sky_color(render->timeOfDay);
+    render->ambientColor = render_get_ambient_color(render->timeOfDay);
 
     for (int i = 0; i < MAX_CLOUDS; i++) {
         render->clouds[i].x = (float)(rand() % 4000) - 2000;
