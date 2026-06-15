@@ -38,7 +38,7 @@ void race_init(Race *race, StageType stageType, int playerCarIndex) {
         Racer *ai = &race->racers[i];
         ai->isPlayer = false;
         ai->car = car_create((CarType)((i + playerCarIndex) % MAX_CARS), aiColors[i - 1]);
-        ai->pos = (Vector3){ (i - 1) * 500, 0, -i * 400 };
+        ai->pos = (Vector3){ (float)((i - 2) * 400), 0, (float)(i * 500 + 800) };
         ai->lap = 1;
         ai->bestLap = 9999.0f;
         ai->aiSpeedMult = 0.85f + (i * 0.05f);
@@ -59,8 +59,7 @@ void race_generate_traffic(Race *race) {
 
     for (int i = 0; i < MAX_TRAFFIC && race->trafficCount < MAX_TRAFFIC; i++) {
         TrafficCar *t = &race->traffic[race->trafficCount];
-        float seg = (float)(rand() % (TOTAL_SEGMENTS - 20)) + 10;
-        t->pos.z = seg * SEGMENT_LENGTH + (rand() % (int)SEGMENT_LENGTH);
+        t->pos.z = (float)(800 + rand() % 15000);
         t->pos.x = (rand() % 5 - 2) * 500.0f;
         t->speed = 150.0f + (rand() % 100);
         t->color = trafficColors[rand() % 6];
