@@ -71,6 +71,14 @@ void audio_init(AudioEngine *engine) {
     free(crashWave.data);
     engine->sndFinish = LoadSoundFromWave(finishWave);
     free(finishWave.data);
+
+    Wave accelWave = wave_generate_sine(200.0f, 0.1f, 0.3f);
+    Wave brakeWave = wave_generate_noise(0.15f, 0.4f);
+    engine->sndAccel = LoadSoundFromWave(accelWave);
+    free(accelWave.data);
+    engine->sndBrake = LoadSoundFromWave(brakeWave);
+    free(brakeWave.data);
+
     engine->sfxLoaded = true;
 }
 
@@ -86,6 +94,14 @@ void audio_play(AudioEngine *engine, StageType stage) {
     snprintf(musicPath, sizeof(musicPath), "%smusic/%s", ASSETS_DIR, trackNames[engine->currentTrack]);
     TraceLog(LOG_INFO, "AUDIO: Loading music: %s", musicPath);
     engine->music = LoadMusicStream(musicPath);
+    if (engine->music.ctxType == 0 || engine->music.frameCount == 0) {
+        char fallbackPath[256];
+        snprintf(fallbackPath, sizeof(fallbackPath), "assets/music/%s", trackNames[engine->currentTrack]);
+        TraceLog(LOG_WARNING, "AUDIO: Primary path failed, trying: %s", fallbackPath);
+        engine->music = LoadMusicStream(fallbackPath);
+    }
+    TraceLog(LOG_INFO, "AUDIO: LoadMusicStream result: ctxType=%d frameCount=%d",
+             engine->music.ctxType, engine->music.frameCount);
     if (engine->music.ctxType == 0 || engine->music.frameCount == 0) {
         engine->playing = false;
         return;
@@ -138,4 +154,14 @@ void audio_sfx_collision(AudioEngine *engine) {
 void audio_sfx_finish(AudioEngine *engine) {
     if (!engine->sfxLoaded) return;
     PlaySound(engine->sndFinish);
+}
+
+void audio_sfx_accelerate(AudioEngine *engine) {
+    if (!engine->sfxLoaded) return;
+    PlaySound(engine->sndAccel);
+}
+
+void audio_sfx_brake(AudioEngine *engine) {
+    if (!engine->sfxLoaded) return;
+    PlaySound(engine->sndBrake);
 }

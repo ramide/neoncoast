@@ -48,6 +48,8 @@ int main(void) {
     AudioEngine audio;
     audio_init(&audio);
 
+    ParticleSystem smoke = {0};
+
     Render render;
     render_init(&render);
 
@@ -80,6 +82,7 @@ int main(void) {
 
         input_update(&input);
         audio_update(&audio, FIXED_DT);
+        particle_update(&smoke, FIXED_DT);
 
         bool confirmPressed = input.state.confirm && !prevConfirm;
         bool backPressed = input.state.back && !prevBack;
@@ -191,6 +194,12 @@ int main(void) {
                         audio_sfx_collision(&audio);
                         render_shake(&render, 1.0f, 0.3f);
                         race.playerCollided = false;
+                    }
+                    if (input.state.throttle > 0 && race.racers[0].speed < MAX_SPEED * 0.9f) {
+                        audio_sfx_accelerate(&audio);
+                    }
+                    if (input.state.brake > 0) {
+                        audio_sfx_brake(&audio);
                     }
                     render_update(&render, FIXED_DT, &race.stage);
                     if (input.state.pause && !prevBack) {
@@ -345,6 +354,8 @@ int main(void) {
                 render_draw_sky(&render);
                 render_draw_background(&render, race.racers[0].pos.z, selectedStage);
                 render_draw_clouds(&render, race.racers[0].pos.z);
+                render_draw_sun(&render, race.racers[0].pos.z);
+                render_draw_flyers(&render, race.racers[0].pos.z);
                 render_draw_road(&render, &race.stage, race.racers[0].pos.z);
                 render_draw_scenery(&render, race.scenery, race.sceneryCount, &race.stage, race.racers[0].pos.z);
                 for (int t = 0; t < race.trafficCount; t++) {
@@ -365,6 +376,8 @@ int main(void) {
                 render_draw_sky(&render);
                 render_draw_background(&render, race.racers[0].pos.z, selectedStage);
                 render_draw_clouds(&render, race.racers[0].pos.z);
+                render_draw_sun(&render, race.racers[0].pos.z);
+                render_draw_flyers(&render, race.racers[0].pos.z);
                 render_draw_road(&render, &race.stage, race.racers[0].pos.z);
                 render_draw_scenery(&render, race.scenery, race.sceneryCount, &race.stage, race.racers[0].pos.z);
                 for (int t = 0; t < race.trafficCount; t++) {
@@ -385,7 +398,16 @@ int main(void) {
                 if (race.collisionTimer > 0) {
                     unsigned char alpha = (unsigned char)(race.collisionTimer * 2.0f * 120);
                     DrawRectangle(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, (Color){ 255, 50, 50, alpha });
+                    for (int p = 0; p < 5; p++) {
+                        particle_emit(&smoke,
+                            (float)(SCREEN_WIDTH / 2 + GetRandomValue(-40, 40)),
+                            (float)(SCREEN_HEIGHT / 2 + GetRandomValue(-20, 20)),
+                            (float)(GetRandomValue(-60, 60)),
+                            (float)(GetRandomValue(-80, 20)),
+                            0.5f, (Color){ 200, 100, 50, 180 });
+                    }
                 }
+                particle_draw(&smoke);
                 break;
             case PAUSED:
                 render_draw_sky(&render);

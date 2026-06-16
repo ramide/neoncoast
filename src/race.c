@@ -99,7 +99,7 @@ void race_generate_scenery(Race *race) {
     for (int i = 0; i < MAX_SCENERY && race->sceneryCount < MAX_SCENERY; i++) {
         SceneryObject *s = &race->scenery[race->sceneryCount];
         if (i < 80) {
-            s->worldZ = (float)(rand() % 5000);
+            s->worldZ = (float)(rand() % 20000);  // distribute near start
         } else {
             s->worldZ = (float)(rand() % TOTAL_SEGMENTS) * SEGMENT_LENGTH;
         }
@@ -351,19 +351,23 @@ static void update_racer(Racer *racer, float dt, InputState input, const Stage *
 
     float roadHalfWidth = ROAD_WIDTH * 0.5f;
     if (fabsf(racer->pos.x) > roadHalfWidth) {
-        float maxOffRoad = ROAD_WIDTH * 0.5f + 500.0f;
-        if (fabsf(racer->pos.x) > maxOffRoad) {
-            racer->pos.x = copysignf(maxOffRoad, racer->pos.x);
-        }
         racer->speed *= 0.85f;
     }
-    // Allow analog drift at lane edges
+    // Off-road analog drift at lane edges
     if (fabsf(racer->pos.x) > ROAD_WIDTH * 0.3f && racer->isPlayer) {
         if (racer->currentLane == 2 && input.steer > 0.5f) {
-            racer->pos.x += input.steer * 800.0f * dt;
+            racer->pos.x += input.steer * 1200.0f * dt;
+            racer->targetX = racer->pos.x;
         } else if (racer->currentLane == -2 && input.steer < -0.5f) {
-            racer->pos.x += input.steer * 800.0f * dt;
+            racer->pos.x += input.steer * 1200.0f * dt;
+            racer->targetX = racer->pos.x;
         }
+    }
+    // Hard clamp AFTER drift
+    float maxOffRoad = ROAD_WIDTH * 0.5f + 800.0f;
+    if (fabsf(racer->pos.x) > maxOffRoad) {
+        racer->pos.x = copysignf(maxOffRoad, racer->pos.x);
+        racer->targetX = racer->pos.x;
     }
 
     float lapDistance = TOTAL_SEGMENTS * SEGMENT_LENGTH;
@@ -402,7 +406,7 @@ static void check_collisions(Race *race) {
             t->speed -= 20.0f;
             if (t->speed < 80.0f) t->speed = 80.0f;
             race->playerCollided = true;
-            race->collisionTimer = 0.5f;
+            race->collisionTimer = 0.15f;
         }
     }
 
@@ -414,7 +418,7 @@ static void check_collisions(Race *race) {
             player->speed *= 0.8f;
             if (player->speed < 120.0f) player->speed = 120.0f;
             race->playerCollided = true;
-            race->collisionTimer = 0.5f;
+            race->collisionTimer = 0.15f;
         }
     }
 
@@ -423,13 +427,14 @@ static void check_collisions(Race *race) {
         SceneryObject *s = &race->scenery[i];
         if (s->type != SCENERY_TREE && s->type != SCENERY_ROCK && 
             s->type != SCENERY_CACTUS && s->type != SCENERY_BUILDING &&
-            s->type != SCENERY_HOUSE && s->type != SCENERY_TEMPLE) continue;
+            s->type != SCENERY_HOUSE && s->type != SCENERY_TEMPLE &&
+            s->type != SCENERY_PALM) continue;
         float dz = fabsf(player->pos.z - s->worldZ);
         float dx = fabsf(player->pos.x - s->worldX);
         float collDist = 80.0f + s->scale * 60.0f;
         if (dz < collDist && dx < collDist) {
             player->speed *= 0.5f;
-            if (player->speed < 200.0f) {
+            if (player->speed < 100.0f) {
                 player->speed = 0.0f;
                 player->pos.x = player->currentLane * 700.0f;
             } else if (player->pos.x > s->worldX) {

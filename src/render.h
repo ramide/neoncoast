@@ -6,6 +6,29 @@
 #include "race.h"
 
 #define MAX_CLOUDS 12
+#define MAX_PARTICLES 50
+#define MAX_FLYERS 6
+
+typedef struct {
+    float x, y;
+    float vx, vy;
+    float life;
+    float maxLife;
+    Color color;
+} Particle;
+
+typedef struct {
+    Particle particles[MAX_PARTICLES];
+    int count;
+} ParticleSystem;
+
+typedef struct {
+    float x, z;
+    float speed;
+    float altitude;
+    int type;
+    Color color;
+} FlyingObject;
 
 typedef struct {
     float x, y, z;
@@ -36,6 +59,11 @@ void render_draw_car(float laneOffset, Color color, float speed);
 void render_draw_opponent(const Stage *stage, float worldX, float worldZ, Color color, float playerZ);
 void render_draw_traffic(const Stage *stage, float worldX, float worldZ, Color color, float playerZ, float speed);
 void render_draw_scenery(const Render *render, SceneryObject *scenery, int count, const Stage *stage, float playerZ);
+void render_draw_sun(const Render *render, float playerZ);
+void render_draw_flyers(const Render *render, float playerZ);
+void particle_emit(ParticleSystem *ps, float x, float y, float vx, float vy, float life, Color color);
+void particle_update(ParticleSystem *ps, float dt);
+void particle_draw(const ParticleSystem *ps);
 Color render_get_sky_color(float timeOfDay);
 Color render_get_ambient_color(float timeOfDay);
 

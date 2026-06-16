@@ -73,10 +73,10 @@ void road_generate(Stage *stage) {
     add_road(stage, seg, 50, 0, 0);
     seg += 50;
 
-    for (int section = 0; section < 35; section++) {
-        int length = 80 + (rand() % 120);
-        float curve = (rand() % 700 - 350) / 1000.0f;
-        float hill = (rand() % 100 - 30) / 300.0f;
+    for (int section = 0; section < 40; section++) {
+        int length = 60 + (rand() % 100);
+        float curve = (rand() % 800 - 400) / 1000.0f;
+        float hill = (rand() % 120 - 40) / 300.0f;
 
         if (stage->type == STAGE_GUATEMALA) hill *= 2.0f;
         if (stage->type == STAGE_SAHARA) hill *= 0.3f;
@@ -85,9 +85,9 @@ void road_generate(Stage *stage) {
         seg += length;
 
         // Straight connector with gentle hills between curves
-        if (section < 34) {
-            int straightLen = 40 + (rand() % 40);
-            float straightHill = ((rand() % 60) - 30) / 300.0f;
+        if (section < 39) {
+            int straightLen = 30 + (rand() % 30);
+            float straightHill = ((rand() % 80) - 40) / 300.0f;
             if (stage->type == STAGE_SAHARA) straightHill *= 0.3f;
             add_road(stage, seg, straightLen, 0, straightHill);
             seg += straightLen;

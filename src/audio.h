@@ -15,6 +15,8 @@ typedef struct {
     Sound sndGo;
     Sound sndCollision;
     Sound sndFinish;
+    Sound sndAccel;
+    Sound sndBrake;
     bool sfxLoaded;
 } AudioEngine;
 
@@ -26,5 +28,7 @@ void audio_set_volume(AudioEngine *engine, float volume);
 void audio_sfx_countdown(AudioEngine *engine, int tick);
 void audio_sfx_collision(AudioEngine *engine);
 void audio_sfx_finish(AudioEngine *engine);
+void audio_sfx_accelerate(AudioEngine *engine);
+void audio_sfx_brake(AudioEngine *engine);
 
 #endif

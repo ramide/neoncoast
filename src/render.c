@@ -629,6 +629,115 @@ void render_draw_scenery(const Render *render, SceneryObject *scenery, int count
     }
 }
 
+void render_draw_sun(const Render *render, float playerZ) {
+    float sunZ = render->sunPosition.z - playerZ;
+    if (sunZ <= 0 || sunZ > DRAW_DISTANCE * SEGMENT_LENGTH) return;
+
+    float scale = FOCAL_LENGTH / sunZ;
+    float screenX = SCREEN_WIDTH * 0.5f + render->sunPosition.x * scale;
+    float screenY = HORIZON_Y + (render->sunPosition.y - CAMERA_HEIGHT) * scale;
+
+    if (screenY > HORIZON_Y + 50) return;
+
+    float sunR = 30.0f * scale * 5.0f;
+    if (sunR < 5.0f) sunR = 5.0f;
+
+    DrawCircle((int)screenX, (int)screenY, (int)sunR, (Color){ 255, 255, 200, 255 });
+    DrawCircle((int)screenX, (int)screenY, (int)(sunR * 2.0f), (Color){ 255, 200, 100, 50 });
+    DrawCircle((int)screenX, (int)screenY, (int)(sunR * 3.5f), (Color){ 255, 180, 80, 15 });
+
+    if (sunR > 10.0f) {
+        for (int i = 1; i <= 3; i++) {
+            float flareR = sunR * (0.3f + i * 0.2f);
+            float flareAlpha = 40.0f / i;
+            DrawCircle((int)screenX, (int)screenY, (int)flareR,
+                       (Color){ 255, 220, 150, (unsigned char)flareAlpha });
+        }
+    }
+}
+
+void particle_emit(ParticleSystem *ps, float x, float y, float vx, float vy, float life, Color color) {
+    if (ps->count >= MAX_PARTICLES) return;
+    Particle *p = &ps->particles[ps->count++];
+    p->x = x; p->y = y;
+    p->vx = vx; p->vy = vy;
+    p->life = life; p->maxLife = life;
+    p->color = color;
+}
+
+void particle_update(ParticleSystem *ps, float dt) {
+    for (int i = 0; i < ps->count; i++) {
+        Particle *p = &ps->particles[i];
+        p->x += p->vx * dt;
+        p->y += p->vy * dt;
+        p->life -= dt;
+        if (p->life <= 0) {
+            ps->particles[i] = ps->particles[--ps->count];
+            i--;
+        }
+    }
+}
+
+void particle_draw(const ParticleSystem *ps) {
+    for (int i = 0; i < ps->count; i++) {
+        const Particle *p = &ps->particles[i];
+        float t = 1.0f - p->life / p->maxLife;
+        float alpha = (1.0f - t) * p->color.a;
+        float size = 3.0f + t * 6.0f;
+        DrawCircle((int)p->x, (int)p->y, (int)size,
+                   (Color){ p->color.r, p->color.g, p->color.b, (unsigned char)alpha });
+    }
+}
+
+void render_draw_flyers(const Render *render, float playerZ) {
+    static FlyingObject flyers[MAX_FLYERS] = {0};
+    static bool initialized = false;
+    if (!initialized) {
+        for (int i = 0; i < MAX_FLYERS; i++) {
+            flyers[i].x = (float)(rand() % 6000) - 3000;
+            flyers[i].z = (float)(rand() % TOTAL_SEGMENTS) * SEGMENT_LENGTH;
+            flyers[i].speed = 200.0f + (float)(rand() % 300);
+            flyers[i].altitude = 800.0f + (float)(rand() % 600);
+            flyers[i].type = rand() % 2;
+            flyers[i].color = flyers[i].type == 0
+                ? (Color){ 80, 80, 80, 255 }
+                : (Color){ 200, 200, 200, 255 };
+        }
+        initialized = true;
+    }
+
+    for (int i = 0; i < MAX_FLYERS; i++) {
+        FlyingObject *f = &flyers[i];
+        f->z += f->speed * 0.016f;
+
+        float relativeZ = f->z - playerZ;
+        if (relativeZ <= 0 || relativeZ > DRAW_DISTANCE * SEGMENT_LENGTH) continue;
+
+        float scale = FOCAL_LENGTH / relativeZ;
+        float screenX = SCREEN_WIDTH * 0.5f + f->x * scale;
+        float screenY = HORIZON_Y + (f->altitude - CAMERA_HEIGHT) * scale;
+
+        if (screenX < -50 || screenX > SCREEN_WIDTH + 50) continue;
+
+        if (f->type == 0) {
+            float wingW = 15.0f * scale * 3.0f;
+            if (wingW < 3) wingW = 3;
+            DrawLine((int)screenX, (int)screenY,
+                     (int)(screenX - wingW), (int)(screenY - 4.0f * scale * 3.0f), f->color);
+            DrawLine((int)screenX, (int)screenY,
+                     (int)(screenX + wingW), (int)(screenY - 4.0f * scale * 3.0f), f->color);
+        } else {
+            float planeW = 20.0f * scale * 3.0f;
+            float planeH = 5.0f * scale * 3.0f;
+            if (planeW < 4) planeW = 4;
+            DrawRectangle((int)(screenX - planeW / 2), (int)(screenY - planeH / 2),
+                          (int)planeW, (int)planeH, f->color);
+            DrawRectangle((int)(screenX - planeW * 0.4f), (int)(screenY - planeH),
+                          (int)(planeW * 0.8f), (int)(planeH * 0.4f), f->color);
+        }
+    }
+}
+
 void render_draw_car(float laneOffset, Color color, float speed) {
     float carY = SCREEN_HEIGHT * 0.78f;
     float carX = SCREEN_WIDTH / 2.0f + laneOffset * 200.0f;
