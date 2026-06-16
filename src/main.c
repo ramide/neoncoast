@@ -344,8 +344,22 @@ int main(void) {
             case COUNTDOWN:
                 render_draw_sky(&render);
                 render_draw_background(&render, race.racers[0].pos.z, selectedStage);
+                render_draw_clouds(&render, race.racers[0].pos.z);
                 render_draw_road(&render, &race.stage, race.racers[0].pos.z);
+                render_draw_scenery(&render, race.scenery, race.sceneryCount, &race.stage, race.racers[0].pos.z);
+                for (int t = 0; t < race.trafficCount; t++) {
+                    TrafficCar *tc = &race.traffic[t];
+                    if (!tc->active) continue;
+                    render_draw_traffic(&race.stage, tc->pos.x, tc->pos.z, tc->color,
+                        race.racers[0].pos.z, tc->speed);
+                }
+                for (int r = 1; r < MAX_RACERS; r++) {
+                    render_draw_opponent(&race.stage, race.racers[r].pos.x,
+                        race.racers[r].pos.z, race.racers[r].car.color, race.racers[0].pos.z);
+                }
+                render_draw_car(race.racers[0].pos.x / 1200.0f, race.racers[0].car.color, 0.0f);
                 ui_draw_countdown(race.countdown);
+                ui_draw_fps_counter();
                 break;
             case RACING:
                 render_draw_sky(&render);
@@ -365,6 +379,9 @@ int main(void) {
                 }
                 render_draw_car(race.racers[0].pos.x / 1200.0f, race.racers[0].car.color, race.racers[0].speed);
                 ui_draw_hud(&race, input_get_active(&input));
+                ui_draw_speed_lines(race.racers[0].speed);
+                ui_draw_brake_effect(IsKeyDown(KEY_S) || IsKeyDown(KEY_DOWN));
+                ui_draw_fps_counter();
                 if (race.collisionTimer > 0) {
                     unsigned char alpha = (unsigned char)(race.collisionTimer * 2.0f * 120);
                     DrawRectangle(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, (Color){ 255, 50, 50, alpha });

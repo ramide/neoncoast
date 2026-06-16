@@ -23,6 +23,9 @@ void ui_draw_stage_select(MenuState *menu, InputSource source, StageType selecte
 void ui_draw_settings(MenuState *menu, InputSource source, GameConfig *config);
 void ui_draw_highscores(InputSource source, const HighScoreTable *table);
 void ui_draw_countdown(int count);
+void ui_draw_fps_counter(void);
+void ui_draw_speed_lines(float speed);
+void ui_draw_brake_effect(bool braking);
 void ui_draw_hud(const Race *race, InputSource source);
 void ui_draw_finish_screen(const Race *race, MenuState *menu, InputSource source);
 void ui_draw_pause_menu(MenuState *menu, InputSource source);

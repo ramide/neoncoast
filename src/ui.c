@@ -165,13 +165,47 @@ void ui_draw_countdown(int count) {
 
     int size = (count == 0) ? 72 : 96;
     Color color = (count == 0) ? GREEN : RED;
-    DrawText(text, SCREEN_WIDTH / 2 - size, SCREEN_HEIGHT / 2 - size / 2, size, color);
+    int textW = MeasureText(text, size);
+    int x = (SCREEN_WIDTH - textW) / 2;
+    int y = (SCREEN_HEIGHT - size) / 2;
+    DrawRectangle(x - 20, y - 10, textW + 40, size + 20, Fade(BLACK, 0.5f));
+    DrawText(text, x, y, size, color);
+}
+
+void ui_draw_fps_counter(void) {
+    int fps = GetFPS();
+    char buf[32];
+    snprintf(buf, sizeof(buf), "FPS: %d", fps);
+    int textW = MeasureText(buf, 18);
+    Color color = fps >= 55 ? GREEN : (fps >= 30 ? YELLOW : RED);
+    DrawText(buf, SCREEN_WIDTH - textW - 15, 10, 18, color);
+}
+
+void ui_draw_speed_lines(float speed) {
+    if (speed < 2400.0f) return;
+    float intensity = (speed - 2400.0f) / 2400.0f;
+    int lineCount = (int)(intensity * 20) + 5;
+    for (int i = 0; i < lineCount; i++) {
+        int x = GetRandomValue(0, SCREEN_WIDTH);
+        int y = GetRandomValue(SCREEN_HEIGHT / 3, SCREEN_HEIGHT);
+        int len = GetRandomValue(20, 60) + (int)(intensity * 40);
+        unsigned char alpha = (unsigned char)(30 + intensity * 50);
+        DrawLine(x, y, x, y + len, (Color){ 255, 255, 255, alpha });
+    }
+}
+
+void ui_draw_brake_effect(bool braking) {
+    if (!braking) return;
+    DrawRectangle(0, SCREEN_HEIGHT - 60, SCREEN_WIDTH, 60, Fade(RED, 0.15f));
 }
 
 void ui_draw_hud(const Race *race, InputSource source) {
     const Racer *player = &race->racers[race->playerIndex];
 
-    DrawText(TextFormat("%d km/h", (int)(player->speed * 1.2f)), 20, 20, 28, WHITE);
+    float speedKmh = player->speed * 1.2f;
+    if (speedKmh > 300.0f) speedKmh = 300.0f;
+    if (speedKmh < 0.0f) speedKmh = 0.0f;
+    DrawText(TextFormat("%d km/h", (int)speedKmh), 20, 20, 28, WHITE);
 
     const char *posLabels[] = { "", "1st", "2nd", "3rd", "4th" };
     DrawText(posLabels[player->racePos], 20, 55, 24, YELLOW);
@@ -190,6 +224,37 @@ void ui_draw_hud(const Race *race, InputSource source) {
     DrawRectangle(20, 185, 100, 12, DARKGRAY);
     Color rpmColor = player->gearRPM > 0.8f ? RED : (player->gearRPM > 0.6f ? YELLOW : GREEN);
     DrawRectangle(20, 185, (int)(100 * player->gearRPM), 12, rpmColor);
+
+    // Analog speedometer - bottom right
+    {
+        float gaugeCX = SCREEN_WIDTH - 100;
+        float gaugeCY = SCREEN_HEIGHT - 30;
+        float radius = 70.0f;
+
+        DrawRectangle((int)(gaugeCX - radius - 10), (int)(gaugeCY - radius - 10),
+                      (int)(radius * 2 + 20), (int)(radius + 20), Fade(BLACK, 0.6f));
+
+        for (int i = 0; i <= 6; i++) {
+            float angle = PI + (float)i / 6.0f * PI;
+            float innerR = radius - 8;
+            int tx1 = (int)(gaugeCX + cosf(angle) * innerR);
+            int ty1 = (int)(gaugeCY + sinf(angle) * innerR);
+            int tx2 = (int)(gaugeCX + cosf(angle) * radius);
+            int ty2 = (int)(gaugeCY + sinf(angle) * radius);
+            DrawLine(tx1, ty1, tx2, ty2, WHITE);
+        }
+
+        float needleAngle = PI + (speedKmh / 300.0f) * PI;
+        int nx = (int)(gaugeCX + cosf(needleAngle) * (radius - 12));
+        int ny = (int)(gaugeCY + sinf(needleAngle) * (radius - 12));
+        DrawLine((int)gaugeCX, (int)gaugeCY, nx, ny, RED);
+        DrawCircle((int)gaugeCX, (int)gaugeCY, 4, RED);
+
+        char spdBuf[16];
+        snprintf(spdBuf, sizeof(spdBuf), "%d", (int)speedKmh);
+        int spdW = MeasureText(spdBuf, 16);
+        DrawText(spdBuf, (int)gaugeCX - spdW / 2, (int)gaugeCY - 22, 16, WHITE);
+    }
 }
 
 void ui_draw_finish_screen(const Race *race, MenuState *menu, InputSource source) {

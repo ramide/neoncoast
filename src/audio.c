@@ -3,9 +3,9 @@
 #include <math.h>
 #include <stdlib.h>
 
-static const char *trackFiles[MAX_TRACKS] = {
-    "assets/music/midnight_drive.ogg",
-    "assets/music/ganymede.ogg"
+static const char *trackNames[MAX_TRACKS] = {
+    "midnight_drive.ogg",
+    "ganymede.ogg"
 };
 
 static Wave wave_generate_sine(float freq, float duration, float volume) {
@@ -81,7 +81,10 @@ void audio_play(AudioEngine *engine, StageType stage) {
         UnloadMusicStream(engine->music);
     }
     engine->currentTrack = (int)stage % MAX_TRACKS;
-    engine->music = LoadMusicStream(trackFiles[engine->currentTrack]);
+    char musicPath[512];
+    snprintf(musicPath, sizeof(musicPath), "%smusic/%s", ASSETS_DIR, trackNames[engine->currentTrack]);
+    TraceLog(LOG_INFO, "AUDIO: Loading music: %s", musicPath);
+    engine->music = LoadMusicStream(musicPath);
     if (engine->music.ctxType == 0 || engine->music.frameCount == 0) {
         engine->playing = false;
         return;

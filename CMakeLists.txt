@@ -39,3 +39,4 @@ else()
 endif()
 
 target_compile_definitions(neoncoast PRIVATE ASSETS_DIR="${CMAKE_SOURCE_DIR}/assets/")
+target_compile_definitions(neoncoast PRIVATE SUPPORT_FILEFORMAT_OGG=1)

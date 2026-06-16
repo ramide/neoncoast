@@ -105,7 +105,7 @@ void race_generate_scenery(Race *race) {
             s->worldZ = (float)(rand() % TOTAL_SEGMENTS) * SEGMENT_LENGTH;
         }
         s->rightSide = (rand() % 2 == 0);
-        float roadEdgeOffset = 2000.0f + (rand() % 2000);
+        float roadEdgeOffset = 800.0f + (rand() % 1200);
 
         int roll = rand() % 100;
 
