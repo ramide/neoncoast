@@ -3,9 +3,8 @@
 #include <string.h>
 #include <stdlib.h>
 
-#define MAX_SPEED 4800.0f
-#define ACCEL_RATE 2000.0f
-#define BRAKE_RATE 1600.0f
+#define ACCEL_RATE 400.0f
+#define BRAKE_RATE 320.0f
 #define FRICTION 0.998f
 #define GEAR_COUNT 6
 #define GEAR_RPM_SHIFT 0.85f
@@ -65,7 +64,7 @@ void race_generate_traffic(Race *race) {
         TrafficCar *t = &race->traffic[race->trafficCount];
         t->pos.z = (float)(800 + rand() % 15000);
         t->pos.x = (rand() % 5 - 2) * 500.0f;
-        t->speed = 150.0f + (rand() % 100);
+        t->speed = MAX_SPEED * (0.3f + (float)(rand() % 200) / 1000.0f);
         t->color = trafficColors[rand() % 6];
         t->active = true;
         t->baseX = t->pos.x;
@@ -105,7 +104,7 @@ void race_generate_scenery(Race *race) {
             s->worldZ = (float)(rand() % TOTAL_SEGMENTS) * SEGMENT_LENGTH;
         }
         s->rightSide = (rand() % 2 == 0);
-        float roadEdgeOffset = 800.0f + (rand() % 1200);
+        float roadEdgeOffset = ROAD_WIDTH * 0.5f + 200.0f + (rand() % 800);
 
         int roll = rand() % 100;
 
@@ -252,7 +251,7 @@ void race_generate_scenery(Race *race) {
         SceneryObject *s = &race->scenery[race->sceneryCount];
         s->worldZ = (float)(rand() % TOTAL_SEGMENTS) * SEGMENT_LENGTH;
         s->rightSide = (rand() % 2 == 0);
-        float closeOffset = 300.0f + (rand() % 500);
+        float closeOffset = ROAD_WIDTH * 0.5f + 100.0f + (rand() % 500);
         s->worldX = s->rightSide ? closeOffset : -closeOffset;
         s->scale = 0.4f + (rand() % 3) * 0.15f;
         if (rand() % 4 == 0) {
@@ -350,10 +349,21 @@ static void update_racer(Racer *racer, float dt, InputState input, const Stage *
     racer->pos.z += racer->speed * dt;
     // Lane-switch handles pos.x update — no analog steering position needed
 
-    float roadHalfWidth = ROAD_WIDTH * 0.4f;
+    float roadHalfWidth = ROAD_WIDTH * 0.5f;
     if (fabsf(racer->pos.x) > roadHalfWidth) {
-        racer->pos.x = copysignf(roadHalfWidth, racer->pos.x);
-        racer->speed *= 0.90f;
+        float maxOffRoad = ROAD_WIDTH * 0.5f + 500.0f;
+        if (fabsf(racer->pos.x) > maxOffRoad) {
+            racer->pos.x = copysignf(maxOffRoad, racer->pos.x);
+        }
+        racer->speed *= 0.85f;
+    }
+    // Allow analog drift at lane edges
+    if (fabsf(racer->pos.x) > ROAD_WIDTH * 0.3f && racer->isPlayer) {
+        if (racer->currentLane == 2 && input.steer > 0.5f) {
+            racer->pos.x += input.steer * 800.0f * dt;
+        } else if (racer->currentLane == -2 && input.steer < -0.5f) {
+            racer->pos.x += input.steer * 800.0f * dt;
+        }
     }
 
     float lapDistance = TOTAL_SEGMENTS * SEGMENT_LENGTH;
@@ -416,13 +426,16 @@ static void check_collisions(Race *race) {
             s->type != SCENERY_HOUSE && s->type != SCENERY_TEMPLE) continue;
         float dz = fabsf(player->pos.z - s->worldZ);
         float dx = fabsf(player->pos.x - s->worldX);
-        float collDist = 40.0f + s->scale * 30.0f;
-        if (dz < collDist * 0.5f && dx < collDist) {
-            player->speed *= 0.7f;
-            if (player->pos.x > s->worldX) {
-                player->pos.x += 30.0f;
+        float collDist = 80.0f + s->scale * 60.0f;
+        if (dz < collDist && dx < collDist) {
+            player->speed *= 0.5f;
+            if (player->speed < 200.0f) {
+                player->speed = 0.0f;
+                player->pos.x = player->currentLane * 700.0f;
+            } else if (player->pos.x > s->worldX) {
+                player->pos.x += 50.0f;
             } else {
-                player->pos.x -= 30.0f;
+                player->pos.x -= 50.0f;
             }
             race->playerCollided = true;
             race->collisionTimer = 0.5f;

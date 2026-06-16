@@ -432,6 +432,7 @@ int main(void) {
 cleanup:
     config_save(&config, CONFIG_PATH);
     models_cleanup();
+    CloseAudioDevice();
     CloseWindow();
     return 0;
 }

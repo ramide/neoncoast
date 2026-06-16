@@ -45,6 +45,8 @@ typedef struct {
     float curveX;
 } TrafficCar;
 
+#define MAX_SPEED 4800.0f
+
 typedef enum {
     SCENERY_TREE,
     SCENERY_BUILDING,

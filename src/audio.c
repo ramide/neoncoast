@@ -1,4 +1,5 @@
 #include "audio.h"
+#include <stdio.h>
 #include <string.h>
 #include <math.h>
 #include <stdlib.h>
@@ -106,8 +107,9 @@ void audio_update(AudioEngine *engine, float dt) {
 }
 
 void audio_stop(AudioEngine *engine) {
-    if (engine->playing && engine->sfxLoaded) {
+    if (engine->playing) {
         StopMusicStream(engine->music);
+        UnloadMusicStream(engine->music);
         engine->playing = false;
     }
 }

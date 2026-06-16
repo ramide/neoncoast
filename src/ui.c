@@ -202,7 +202,7 @@ void ui_draw_brake_effect(bool braking) {
 void ui_draw_hud(const Race *race, InputSource source) {
     const Racer *player = &race->racers[race->playerIndex];
 
-    float speedKmh = player->speed * 1.2f;
+    float speedKmh = player->speed * (300.0f / MAX_SPEED);
     if (speedKmh > 300.0f) speedKmh = 300.0f;
     if (speedKmh < 0.0f) speedKmh = 0.0f;
     DrawText(TextFormat("%d km/h", (int)speedKmh), 20, 20, 28, WHITE);

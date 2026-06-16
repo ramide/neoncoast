@@ -254,6 +254,19 @@ void render_draw_road(const Render *render, const Stage *stage, float playerZ) {
         cumHill[n] = totalHill;
     }
 
+    // Ground fill below horizon (covers gaps between sub-strips)
+    {
+        Color groundColor;
+        if (render->timeOfDay < 0.2f || render->timeOfDay > 0.8f) {
+            groundColor = (Color){ 20, 100, 30, 255 };
+        } else if (render->timeOfDay < 0.3f || render->timeOfDay > 0.7f) {
+            groundColor = (Color){ 25, 120, 40, 255 };
+        } else {
+            groundColor = (Color){ 30, 140, 50, 255 };
+        }
+        DrawRectangle(0, (int)HORIZON_Y, SCREEN_WIDTH, SCREEN_HEIGHT - (int)HORIZON_Y, groundColor);
+    }
+
     #define SUBDIV 8
 
     for (int n = DRAW_DISTANCE - 1; n >= 0; n--) {
@@ -297,9 +310,9 @@ void render_draw_road(const Render *render, const Stage *stage, float playerZ) {
             if (rectH < 1.0f) rectH = 1.0f;
 
             int rx = (int)(avgX - avgW);
-            int ry = (int)topY;
-            int rw = (int)(avgW * 2.0f + 1.0f);
-            int rh = (int)(bottomY - topY + 1.0f);
+            int ry = (int)floorf(topY);
+            int rw = (int)(avgW * 2.0f + 1.0f + 1.0f);
+            int rh = (int)ceilf(bottomY) - ry + 1;
 
             // Grass terrain beside road (full-width strip, alternates for road-like feel)
             {
@@ -339,22 +352,6 @@ void render_draw_road(const Render *render, const Stage *stage, float playerZ) {
         }
     }
     #undef SUBDIV
-
-    // Fill bottom gap where closest segments are skipped (bottomY >= SCREEN_HEIGHT)
-    {
-        Color groundColor;
-        if (render->timeOfDay < 0.2f || render->timeOfDay > 0.8f) {
-            groundColor = (Color){ 20, 100, 30, 255 };
-        } else if (render->timeOfDay < 0.3f || render->timeOfDay > 0.7f) {
-            groundColor = (Color){ 25, 120, 40, 255 };
-        } else {
-            groundColor = (Color){ 30, 140, 50, 255 };
-        }
-        int groundTop = (int)(HORIZON_Y + CAMERA_HEIGHT * (FOCAL_LENGTH / 1.0f));
-        if (groundTop < SCREEN_HEIGHT) {
-            DrawRectangle(0, groundTop, SCREEN_WIDTH, SCREEN_HEIGHT - groundTop, groundColor);
-        }
-    }
 }
 
 void render_draw_opponent(const Stage *stage, float worldX, float worldZ, Color color, float playerZ) {
@@ -370,10 +367,10 @@ void render_draw_opponent(const Stage *stage, float worldX, float worldZ, Color 
     const Segment *seg = road_get_segment(stage, idx);
     screenX += seg->curve * scale * SEGMENT_LENGTH;
 
-    float carW = 400.0f * scale;
-    float carH = 180.0f * scale;
-    if (carW < 4.0f) carW = 4.0f;
-    if (carH < 2.0f) carH = 2.0f;
+    float carW = 600.0f * scale;
+    float carH = 260.0f * scale;
+    if (carW < 6.0f) carW = 6.0f;
+    if (carH < 3.0f) carH = 3.0f;
 
     DrawRectangle((int)(screenX - carW / 2), (int)(screenY - carH / 2), (int)carW, (int)carH, color);
     DrawRectangle((int)(screenX - carW * 0.3f), (int)(screenY - carH * 0.55f - 14 * scale),
@@ -400,10 +397,10 @@ void render_draw_traffic(const Stage *stage, float worldX, float worldZ, Color c
     const Segment *seg = road_get_segment(stage, idx);
     screenX += seg->curve * scale * SEGMENT_LENGTH;
 
-    float carW = 360.0f * scale;
-    float carH = 160.0f * scale;
-    if (carW < 4.0f) carW = 4.0f;
-    if (carH < 2.0f) carH = 2.0f;
+    float carW = 540.0f * scale;
+    float carH = 240.0f * scale;
+    if (carW < 5.0f) carW = 5.0f;
+    if (carH < 3.0f) carH = 3.0f;
 
     DrawRectangle((int)(screenX - carW / 2), (int)(screenY - carH / 2), (int)carW, (int)carH, color);
     DrawRectangle((int)(screenX - carW * 0.25f), (int)(screenY - carH * 0.55f - 8 * scale),
@@ -415,8 +412,23 @@ void render_draw_traffic(const Stage *stage, float worldX, float worldZ, Color c
 }
 
 void render_draw_scenery(const Render *render, SceneryObject *scenery, int count, const Stage *stage, float playerZ) {
+    // Depth sort: far-to-near using index array (avoids modifying race state)
+    int indices[MAX_SCENERY];
+    for (int i = 0; i < count; i++) indices[i] = i;
+
+    for (int i = 1; i < count; i++) {
+        int key = indices[i];
+        float keyZ = scenery[key].worldZ - playerZ;
+        int j = i - 1;
+        while (j >= 0 && (scenery[indices[j]].worldZ - playerZ) > keyZ) {
+            indices[j + 1] = indices[j];
+            j--;
+        }
+        indices[j + 1] = key;
+    }
+
     for (int i = 0; i < count; i++) {
-        SceneryObject *s = &scenery[i];
+        SceneryObject *s = &scenery[indices[i]];
         float relativeZ = s->worldZ - playerZ;
         if (relativeZ <= 0 || relativeZ > DRAW_DISTANCE * SEGMENT_LENGTH) continue;
 
@@ -432,10 +444,10 @@ void render_draw_scenery(const Render *render, SceneryObject *scenery, int count
 
         switch (s->type) {
             case SCENERY_TREE: {
-                float trunkW = 8.0f * s->scale * scale;
-                float trunkH = 60.0f * s->scale * scale;
-                float crownR = 25.0f * s->scale * scale;
-                if (trunkW < 1) continue;
+                float trunkW = 14.0f * s->scale * scale;
+                float trunkH = 100.0f * s->scale * scale;
+                float crownR = 45.0f * s->scale * scale;
+                if (trunkW < 2) continue;
                 DrawRectangle((int)(screenX - trunkW / 2), (int)(screenY - trunkH),
                               (int)trunkW, (int)trunkH, (Color){ 100, 60, 30, 255 });
                 DrawCircle((int)screenX, (int)(screenY - trunkH - crownR * 0.5f),
@@ -443,10 +455,10 @@ void render_draw_scenery(const Render *render, SceneryObject *scenery, int count
                 break;
             }
             case SCENERY_PALM: {
-                float trunkW = 6.0f * s->scale * scale;
-                float trunkH = 80.0f * s->scale * scale;
-                float frondR = 35.0f * s->scale * scale;
-                if (trunkW < 1) continue;
+                float trunkW = 10.0f * s->scale * scale;
+                float trunkH = 130.0f * s->scale * scale;
+                float frondR = 55.0f * s->scale * scale;
+                if (trunkW < 2) continue;
                 DrawRectangle((int)(screenX - trunkW / 2), (int)(screenY - trunkH),
                               (int)trunkW, (int)trunkH, (Color){ 120, 80, 40, 255 });
                 DrawCircle((int)screenX, (int)(screenY - trunkH), (int)frondR, s->color);
@@ -457,9 +469,9 @@ void render_draw_scenery(const Render *render, SceneryObject *scenery, int count
                 break;
             }
             case SCENERY_BUILDING: {
-                float buildW = 60.0f * s->scale * scale;
-                float buildH = 120.0f * s->scale * scale;
-                if (buildW < 2) continue;
+                float buildW = 100.0f * s->scale * scale;
+                float buildH = 200.0f * s->scale * scale;
+                if (buildW < 3) continue;
                 DrawRectangle((int)(screenX - buildW / 2), (int)(screenY - buildH),
                               (int)buildW, (int)buildH, s->color);
                 Color windowColor = (Color){ 200, 220, 255, 200 };
@@ -476,10 +488,10 @@ void render_draw_scenery(const Render *render, SceneryObject *scenery, int count
                 break;
             }
             case SCENERY_SIGN: {
-                float signW = 30.0f * s->scale * scale;
-                float signH = 15.0f * s->scale * scale;
-                float poleH = 40.0f * s->scale * scale;
-                if (signW < 1) continue;
+                float signW = 50.0f * s->scale * scale;
+                float signH = 25.0f * s->scale * scale;
+                float poleH = 70.0f * s->scale * scale;
+                if (signW < 2) continue;
                 DrawRectangle((int)(screenX - 2 * scale), (int)(screenY - poleH),
                               (int)(4 * scale), (int)poleH, (Color){ 150, 150, 150, 255 });
                 DrawRectangle((int)(screenX - signW / 2), (int)(screenY - poleH - signH),
@@ -487,10 +499,10 @@ void render_draw_scenery(const Render *render, SceneryObject *scenery, int count
                 break;
             }
             case SCENERY_TEMPLE: {
-                float baseW = 50.0f * s->scale * scale;
-                float baseH = 60.0f * s->scale * scale;
-                float roofH = 30.0f * s->scale * scale;
-                if (baseW < 2) continue;
+                float baseW = 80.0f * s->scale * scale;
+                float baseH = 100.0f * s->scale * scale;
+                float roofH = 50.0f * s->scale * scale;
+                if (baseW < 3) continue;
                 DrawRectangle((int)(screenX - baseW / 2), (int)(screenY - baseH),
                               (int)baseW, (int)baseH, s->color);
                 DrawTriangle(
@@ -562,10 +574,10 @@ void render_draw_scenery(const Render *render, SceneryObject *scenery, int count
                 break;
             }
             case SCENERY_HOUSE: {
-                float houseW = 40.0f * s->scale * scale;
-                float houseH = 30.0f * s->scale * scale;
-                float roofOverhang = 6.0f * s->scale * scale;
-                if (houseW < 2) continue;
+                float houseW = 70.0f * s->scale * scale;
+                float houseH = 50.0f * s->scale * scale;
+                float roofOverhang = 8.0f * s->scale * scale;
+                if (houseW < 3) continue;
                 DrawRectangle((int)(screenX - houseW / 2), (int)(screenY - houseH),
                               (int)houseW, (int)houseH, s->color);
                 DrawTriangle(
@@ -596,10 +608,10 @@ void render_draw_scenery(const Render *render, SceneryObject *scenery, int count
                 break;
             }
             case SCENERY_LAMP: {
-                float poleW = 3.0f * s->scale * scale;
-                float poleH = 50.0f * s->scale * scale;
-                float lightR = 8.0f * s->scale * scale;
-                if (poleW < 1) continue;
+                float poleW = 4.0f * s->scale * scale;
+                float poleH = 80.0f * s->scale * scale;
+                float lightR = 12.0f * s->scale * scale;
+                if (poleW < 2) continue;
                 DrawRectangle((int)(screenX - poleW / 2), (int)(screenY - poleH),
                               (int)poleW, (int)poleH, (Color){ 80, 80, 80, 255 });
                 Color lightColor;
