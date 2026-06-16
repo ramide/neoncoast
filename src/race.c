@@ -36,9 +36,9 @@ void race_init(Race *race, StageType stageType, int playerCarIndex) {
         Racer *ai = &race->racers[i];
         ai->isPlayer = false;
         ai->car = car_create((CarType)((i + playerCarIndex) % MAX_CARS), aiColors[i - 1]);
-        ai->pos = (Vector3){ (float)((i - 2) * 400), 0, (float)(i * 500 + 800) };
+        ai->pos = (Vector3){ (float)((i - 2) * 900), 0, (float)(i * 500 + 800) };
         ai->targetX = ai->pos.x;
-        ai->currentLane = (int)(ai->pos.x / 700.0f);
+        ai->currentLane = (int)(ai->pos.x / 900.0f);
         if (ai->currentLane < -2) ai->currentLane = -2;
         if (ai->currentLane > 2) ai->currentLane = 2;
         ai->aiLaneTimer = 2.0f + (float)(rand() % 300) / 100.0f;
@@ -96,15 +96,11 @@ void race_generate_scenery(Race *race) {
 
     StageType stageType = race->stage.type;
 
-    for (int i = 0; i < MAX_SCENERY && race->sceneryCount < MAX_SCENERY; i++) {
+    for (int i = 0; i < 150 && race->sceneryCount < 150; i++) {
         SceneryObject *s = &race->scenery[race->sceneryCount];
-        if (i < 80) {
-            s->worldZ = (float)(rand() % 20000);  // distribute near start
-        } else {
-            s->worldZ = (float)(rand() % TOTAL_SEGMENTS) * SEGMENT_LENGTH;
-        }
+        s->worldZ = (float)(rand() % TOTAL_SEGMENTS) * SEGMENT_LENGTH;
         s->rightSide = (rand() % 2 == 0);
-        float roadEdgeOffset = ROAD_WIDTH * 0.5f + 200.0f + (rand() % 800);
+        float roadEdgeOffset = ROAD_WIDTH * 0.5f - 500.0f + (float)(rand() % 500);
 
         int roll = rand() % 100;
 
@@ -246,12 +242,12 @@ void race_generate_scenery(Race *race) {
         race->sceneryCount++;
     }
 
-    // Second pass: close scenery near road (houses, lamps) - visible at close range
-    for (int i = 0; i < MAX_SCENERY && race->sceneryCount < MAX_SCENERY; i++) {
+    // Second pass: close scenery near road (houses, lamps)
+    for (int i = 0; i < 50 && race->sceneryCount < MAX_SCENERY; i++) {
         SceneryObject *s = &race->scenery[race->sceneryCount];
         s->worldZ = (float)(rand() % TOTAL_SEGMENTS) * SEGMENT_LENGTH;
         s->rightSide = (rand() % 2 == 0);
-        float closeOffset = ROAD_WIDTH * 0.5f + 100.0f + (rand() % 500);
+        float closeOffset = ROAD_WIDTH * 0.5f - 600.0f + (float)(rand() % 400);
         s->worldX = s->rightSide ? closeOffset : -closeOffset;
         s->scale = 0.4f + (rand() % 3) * 0.15f;
         if (rand() % 4 == 0) {
@@ -305,7 +301,7 @@ static void update_racer(Racer *racer, float dt, InputState input, const Stage *
         racer->steerPrevRight = (input.steer > 0.5f);
         if (newLane != racer->currentLane) {
             racer->currentLane = newLane;
-            racer->targetX = racer->currentLane * 700.0f;
+            racer->targetX = racer->currentLane * 900.0f;
             racer->laneSwitchTimer = 0.3f;
         }
         racer->pos.x += (racer->targetX - racer->pos.x) * fminf(1.0f, dt * 10.0f);
@@ -316,7 +312,7 @@ static void update_racer(Racer *racer, float dt, InputState input, const Stage *
         if (racer->aiLaneTimer <= 0) {
             int newLane = rand() % 5 - 2;
             racer->currentLane = newLane;
-            racer->targetX = racer->currentLane * 700.0f;
+            racer->targetX = racer->currentLane * 900.0f;
             racer->aiLaneTimer = 2.0f + (float)(rand() % 300) / 100.0f;
         }
         racer->pos.x += (racer->targetX - racer->pos.x) * fminf(1.0f, dt * 8.0f);
@@ -354,7 +350,7 @@ static void update_racer(Racer *racer, float dt, InputState input, const Stage *
         racer->speed *= 0.85f;
     }
     // Off-road analog drift at lane edges
-    if (fabsf(racer->pos.x) > ROAD_WIDTH * 0.3f && racer->isPlayer) {
+    if (fabsf(racer->pos.x) > ROAD_WIDTH * 0.15f && racer->isPlayer) {
         if (racer->currentLane == 2 && input.steer > 0.5f) {
             racer->pos.x += input.steer * 1200.0f * dt;
             racer->targetX = racer->pos.x;
@@ -481,6 +477,14 @@ void race_update(Race *race, float dt, InputState input) {
         float targetX = seg->curve * 800.0f + t->baseX;
         t->pos.x += (targetX - t->pos.x) * 0.05f;
         t->pos.z += t->speed * dt;
+
+        // Recycle traffic that's too far ahead
+        float playerZ = race->racers[race->playerIndex].pos.z;
+        if (t->pos.z - playerZ > DRAW_DISTANCE * SEGMENT_LENGTH * 2) {
+            t->pos.z = playerZ - 800.0f - (float)(rand() % 5000);
+            t->pos.x = (float)((rand() % 5 - 2) * 500);
+            t->baseX = t->pos.x;
+        }
     }
 
     for (int i = 0; i < MAX_RACERS; i++) {

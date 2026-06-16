@@ -367,6 +367,18 @@ void render_draw_opponent(const Stage *stage, float worldX, float worldZ, Color 
     const Segment *seg = road_get_segment(stage, idx);
     screenX += seg->curve * scale * SEGMENT_LENGTH;
 
+    // Cumulative hill offset from player to car
+    float cumHill = 0;
+    int playerSeg = (int)(playerZ / SEGMENT_LENGTH);
+    int carSeg = (int)(worldZ / SEGMENT_LENGTH);
+    int n = playerSeg + 1;
+    while (n <= carSeg) {
+        cumHill += road_get_segment(stage, ((n % TOTAL_SEGMENTS) + TOTAL_SEGMENTS) % TOTAL_SEGMENTS)->hill;
+        n++;
+    }
+    float hillOffset = cumHill * scale * 500.0f;
+    screenY -= hillOffset;
+
     float carW = 600.0f * scale;
     float carH = 260.0f * scale;
     if (carW < 6.0f) carW = 6.0f;
@@ -396,6 +408,18 @@ void render_draw_traffic(const Stage *stage, float worldX, float worldZ, Color c
     int idx = ((int)segIndex) % TOTAL_SEGMENTS;
     const Segment *seg = road_get_segment(stage, idx);
     screenX += seg->curve * scale * SEGMENT_LENGTH;
+
+    // Cumulative hill offset from player to car
+    float cumHill = 0;
+    int playerSeg = (int)(playerZ / SEGMENT_LENGTH);
+    int carSeg = (int)(worldZ / SEGMENT_LENGTH);
+    int n = playerSeg + 1;
+    while (n <= carSeg) {
+        cumHill += road_get_segment(stage, ((n % TOTAL_SEGMENTS) + TOTAL_SEGMENTS) % TOTAL_SEGMENTS)->hill;
+        n++;
+    }
+    float hillOffset = cumHill * scale * 500.0f;
+    screenY -= hillOffset;
 
     float carW = 540.0f * scale;
     float carH = 240.0f * scale;
@@ -435,6 +459,17 @@ void render_draw_scenery(const Render *render, SceneryObject *scenery, int count
         float scale = FOCAL_LENGTH / relativeZ;
         float screenX = SCREEN_WIDTH * 0.5f + s->worldX * scale;
         float screenY = HORIZON_Y + CAMERA_HEIGHT * scale;
+
+        // Cumulative hill offset from player to scenery
+        float cumHill = 0;
+        int playerSeg = (int)(playerZ / SEGMENT_LENGTH);
+        int objSeg = (int)(s->worldZ / SEGMENT_LENGTH);
+        int n = playerSeg + 1;
+        while (n <= objSeg) {
+            cumHill += road_get_segment(stage, ((n % TOTAL_SEGMENTS) + TOTAL_SEGMENTS) % TOTAL_SEGMENTS)->hill;
+            n++;
+        }
+        screenY -= cumHill * scale * 500.0f;
 
         int segIdx = (int)(s->worldZ / SEGMENT_LENGTH) % TOTAL_SEGMENTS;
         const Segment *seg = road_get_segment(stage, segIdx);
